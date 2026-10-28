@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<script src="frei-config.js?v=20261028-0429"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TW-CAD – Werkzeuge</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23161a20'/%3E%3Cpath d='M7 25V7h18v18z' fill='none' stroke='%23e8eaed' stroke-width='3'/%3E%3Cpath d='M7 16h18M16 7v18' stroke='%23c8102e' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/cad.css?v=20261028-0429">
+</head>
+<body class="wz">
+<!-- TW-CAD Werkzeug-Fenster (Zwei-Bildschirm-Modus): wird vom Hauptfenster gefüllt und gesteuert -->
+<header class="wz-kopf">
+  <div class="brand"><span class="logo">TW</span><span class="brand-t">CAD</span><span class="wz-t">Werkzeuge</span></div>
+  <input id="projName" class="proj" spellcheck="false" title="Projektname">
+  <div class="top-actions" id="topActions"></div>
+</header>
+<nav id="views" class="views wz-views"></nav>
+<div class="wz-leiste"><span class="wz-l">Zeichenhilfen</span><div class="toggles" id="toggles"></div></div>
+<div id="optbar" class="optbar"></div>
+<div class="wz-main">
+  <aside id="toolbox" class="toolbox"></aside>
+  <aside id="side" class="side">
+    <div class="side-tabs" id="sideTabs"></div>
+    <div class="side-body" id="sideBody"></div>
+  </aside>
+</div>
+<div id="wzFehlt" class="wz-fehlt hidden">
+  <h2>TW-CAD – Werkzeug-Fenster</h2>
+  <p>Dieses Fenster gehört zum Hauptfenster von TW-CAD und wird dort über den Knopf <b>„2 Bildschirme“</b> geöffnet.</p>
+  <p><a href="./">TW-CAD öffnen</a></p>
+</div>
+<script>
+(function () {
+  var o = null; try { o = window.opener && window.opener.TWCAD ? window.opener : null; } catch (e) { o = null; }
+  if (!o) { document.querySelector('.wz-main').classList.add('hidden'); document.getElementById('wzFehlt').classList.remove('hidden'); return; }
+  o.TWCAD.werkzeugFensterBereit(window);
+  // Tastatur an das Hauptfenster weiterreichen (Kürzel, Maße tippen, Enter, Esc, Strg+Z …)
+  window.addEventListener('keydown', function (e) { try { o.TWCAD.handleKey(e, true); } catch (x) { } });
+  window.addEventListener('keyup', function (e) { try { if (e.key === ' ') o.TWCAD.spaceDown = false; } catch (x) { } });
+  window.addEventListener('pagehide', function () { try { o.TWCAD.werkzeugFensterZu(window); } catch (x) { } });
+})();
+</script>
+</body>
+</html>
