@@ -1,9 +1,9 @@
 // TW-CAD – Abstandsmaße: zeigt beim Zeichnen live die Entfernung vom Mauszeiger zu den Wandflächen
 // (links/rechts/oben/unten, an der Hauptrichtung des Gebäudes ausgerichtet), fängt auf runde Abstände
 // und erlaubt das exakte Eintippen eines Abstands (Tab wählt das Maß, Zahl + Enter).
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import { columnPoly } from './render2d.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import { columnPoly } from './render2d.js?v=20261103-1900';
 
 /** Werkzeuge, bei denen Abstandsmaße sinnvoll sind */
 export const ABSTAND_TOOLS = new Set(['wall', 'wallrect', 'column', 'stair', 'symbol', 'text', 'level', 'line', 'poly', 'rect', 'circle', 'guide', 'joint', 'tilezone', 'measure', 'dim', 'move', 'copy', 'rotate', 'mirror']);

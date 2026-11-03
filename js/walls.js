@@ -1,5 +1,5 @@
 // TW-CAD – Wandgeometrie: Gehrungen, T-Stöße, Vereinigung, Räume, Öffnungen
-import * as G from './geom.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
 
 const JOIN_TOL = 6; // mm Toleranz für verbundene Wandenden
 

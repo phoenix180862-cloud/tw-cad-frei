@@ -1,5 +1,5 @@
 // TW-CAD – Geländemodell aus Höhenpunkten (Delaunay-Dreiecke, Interpolation, Höhenlinien)
-import * as G from './geom.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
 
 function DL() { return (typeof globalThis !== 'undefined' && globalThis.Delaunator) || (typeof window !== 'undefined' && window.Delaunator); }
 

@@ -1,7 +1,7 @@
 // TW-CAD – Bearbeitungsfunktionen: Transformieren, Kopieren, Wand versetzen, Verlängern, Verbinden, Teilen
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import { uid } from './model.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import { uid } from './model.js?v=20261103-1900';
 
 /** Alle Punkte eines Elements mit f(p) abbilden. rot: zusätzlicher Drehwinkel (Rad), mirror: true */
 export function transformElement(e, f, rot = 0, mirror = false) {
@@ -75,9 +75,22 @@ export function moveWallEnd(doc, w, end, p, stretch = true) {
   if (stretch) for (const c of W.connectedEnds(doc, w.storey, old, w.id)) c.w[c.end] = G.clone(p);
   w[end] = G.clone(p);
 }
-/** Wandlänge setzen (Anfang bleibt) */
-export function setWallLength(doc, w, L) {
-  const u = G.norm(G.sub(w.b, w.a)); moveWallEnd(doc, w, 'b', G.add(w.a, G.mul(u, L)));
+/** Wandende für Längenänderung bewegen: hängt dort genau eine Querwand, wird sie parallel versetzt (Gebäude bleibt rechtwinklig, Gegenwand läuft mit) */
+function laengenEnde(doc, w, end, p) {
+  const old = G.clone(w[end]); const delta = G.sub(p, old); if (G.len(delta) < 0.01) return;
+  const u = G.norm(G.sub(w.b, w.a)); const cons = W.connectedEnds(doc, w.storey, old, w.id);
+  if (cons.length === 1) {
+    const o = cons[0].w; const v = G.norm(G.sub(o.b, o.a));
+    if (Math.abs(G.cross(v, u)) > 0.2) { shiftWall(doc, o, G.dot(G.perp(v), delta)); if (G.dist(w[end], p) > 0.5) w[end] = G.clone(p); return; }
+  }
+  moveWallEnd(doc, w, end, p);
+}
+/** Wandlänge exakt setzen. fix: 'a' = Anfang bleibt (Ende wandert), 'b' = Ende bleibt, 'mitte' = beide Enden gleich weit. Angeschlossene Wände laufen mit. */
+export function setWallLength(doc, w, L, fix = 'a') {
+  const u = G.norm(G.sub(w.b, w.a));
+  if (fix === 'b') { laengenEnde(doc, w, 'a', G.sub(w.b, G.mul(u, L))); return; }
+  if (fix === 'mitte') { const m = G.mid(w.a, w.b); const a2 = G.sub(m, G.mul(u, L / 2)), b2 = G.add(m, G.mul(u, L / 2)); laengenEnde(doc, w, 'a', a2); laengenEnde(doc, w, 'b', b2); return; }
+  laengenEnde(doc, w, 'b', G.add(w.a, G.mul(u, L)));
 }
 
 /** Verlängern/Kürzen bis Grenzlinie (Wand, Linie) */

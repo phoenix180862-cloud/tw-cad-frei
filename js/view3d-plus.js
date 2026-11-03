@@ -1,10 +1,10 @@
 // TW-CAD – 3D-Erweiterungen: 3D-Schnitt/Puppenhaus, Kameras & Rundgang-Video, Export OBJ/glTF/IFC, Sonnenstudie
 import * as THREE from 'three';
-import * as G from './geom.js?v=20261028-0429';
-import * as S from './sonne.js?v=20261028-0429';
-import { icon } from './icons.js?v=20261028-0429';
-import { FREI, WERBUNG } from './frei.js?v=20261028-0429';
-import { pdfVorbereiten } from './i18n.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as S from './sonne.js?v=20261103-1900';
+import { icon } from './icons.js?v=20261103-1900';
+import { FREI, WERBUNG } from './frei.js?v=20261103-1900';
+import { pdfVorbereiten } from './i18n.js?v=20261103-1900';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const M = 0.001;
@@ -155,17 +155,17 @@ export function exportPanel(v, body) {
     h('button', { class: 'btn sm pri', html: icon('ifc') + 'IFC (BIM)', onclick: () => exportIfc(v) }),
     h('button', { class: 'btn sm', html: icon('cube') + 'glTF / GLB', onclick: () => exportGlb(v) }),
     h('button', { class: 'btn sm', html: icon('cube') + 'OBJ', onclick: () => exportObj(v) }),
-    FREI ? null : h('button', { class: 'btn sm ki', html: icon('ki') + 'KI-Visualisierung', onclick: async () => { const K = await import('./ki-plus.js?v=20261028-0429'); K.visualisierung(v); } })),
+    FREI ? null : h('button', { class: 'btn sm ki', html: icon('ki') + 'KI-Visualisierung', onclick: async () => { const K = await import('./ki-plus.js?v=20261103-1900'); K.visualisierung(v); } })),
     h('div', { class: 'muted' }, 'IFC4 für Architekten, Statiker und BIM-Programme (ArchiCAD, Revit, Allplan, Vectorworks): Geschosse, Wände mit Schichten, Türen, Fenster, Decken, Räume mit Flächen, Stützen, Unterzüge, Dach. GLB/OBJ für SketchUp, Blender, Twinmotion oder AR-Apps.')));
 }
-async function exportIfc(v) { try { const I = await import('./ifc.js?v=20261028-0429'); const r = I.exportIFC(v.app.doc); v.app.downloadBlob(new Blob([r.text], { type: 'application/x-step' }), `${v.app.doc.p.name || 'Projekt'}.ifc`); v.app.toast(`IFC gespeichert: ${r.stats.waende} Wände, ${r.stats.tueren} Türen, ${r.stats.fenster} Fenster, ${r.stats.raeume} Räume`); } catch (e) { console.error(e); v.app.toast('IFC-Export fehlgeschlagen: ' + e.message, true); } }
+async function exportIfc(v) { try { const I = await import('./ifc.js?v=20261103-1900'); const r = I.exportIFC(v.app.doc); v.app.downloadBlob(new Blob([r.text], { type: 'application/x-step' }), `${v.app.doc.p.name || 'Projekt'}.ifc`); v.app.toast(`IFC gespeichert: ${r.stats.waende} Wände, ${r.stats.tueren} Türen, ${r.stats.fenster} Fenster, ${r.stats.raeume} Räume`); } catch (e) { console.error(e); v.app.toast('IFC-Export fehlgeschlagen: ' + e.message, true); } }
 function exportWurzel(v) { const g = v.root.clone(true); g.traverse(o => { if (o.isLight) o.visible = false; }); return g; }
 async function exportGlb(v) {
-  try { const { GLTFExporter } = await import('../lib/GLTFExporter.js?v=20261028-0429'); const ex = new GLTFExporter(); const scene = new THREE.Scene(); scene.add(exportWurzel(v));
+  try { const { GLTFExporter } = await import('../lib/GLTFExporter.js?v=20261103-1900'); const ex = new GLTFExporter(); const scene = new THREE.Scene(); scene.add(exportWurzel(v));
     const buf = await ex.parseAsync(scene, { binary: true, onlyVisible: true, maxTextureSize: 2048 }); v.app.downloadBlob(new Blob([buf], { type: 'model/gltf-binary' }), `${v.app.doc.p.name || 'Projekt'}.glb`); v.app.toast('GLB gespeichert'); }
   catch (e) { console.error(e); v.app.toast('glTF-Export fehlgeschlagen: ' + e.message, true); }
 }
 async function exportObj(v) {
-  try { const { OBJExporter } = await import('../lib/OBJExporter.js?v=20261028-0429'); const txt = new OBJExporter().parse(exportWurzel(v)); v.app.downloadBlob(new Blob([txt], { type: 'text/plain' }), `${v.app.doc.p.name || 'Projekt'}.obj`); v.app.toast('OBJ gespeichert (Maßeinheit Meter)'); }
+  try { const { OBJExporter } = await import('../lib/OBJExporter.js?v=20261103-1900'); const txt = new OBJExporter().parse(exportWurzel(v)); v.app.downloadBlob(new Blob([txt], { type: 'text/plain' }), `${v.app.doc.p.name || 'Projekt'}.obj`); v.app.toast('OBJ gespeichert (Maßeinheit Meter)'); }
   catch (e) { console.error(e); v.app.toast('OBJ-Export fehlgeschlagen: ' + e.message, true); }
 }

@@ -1,17 +1,19 @@
 // TW-CAD – Werkzeuge
-import * as G from './geom.js?v=20261028-0429';
-import * as AB from './aufbau.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import * as E from './edit.js?v=20261028-0429';
-import { uid } from './model.js?v=20261028-0429';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261028-0429';
-import { defaultTileCfg } from './tiles.js?v=20261028-0429';
-import * as K from './katalog.js?v=20261028-0429';
-import * as B from './bauteile.js?v=20261028-0429';
-import * as T from './treppe.js?v=20261028-0429';
-import { t } from './i18n.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as AB from './aufbau.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import * as E from './edit.js?v=20261103-1900';
+import { uid } from './model.js?v=20261103-1900';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261103-1900';
+import { defaultTileCfg } from './tiles.js?v=20261103-1900';
+import * as K from './katalog.js?v=20261103-1900';
+import * as B from './bauteile.js?v=20261103-1900';
+import * as T from './treppe.js?v=20261103-1900';
+import { t } from './i18n.js?v=20261103-1900';
+import { laengenSchritt } from './snap.js?v=20261103-1900';
 
 const SEL = '#2563eb';
+const HART = new Set(['end', 'ecke', 'schnitt', 'mitte', 'zentrum', 'lot', 'spur', 'abstand']);
 export const WAND_MATERIAL = [['mauerwerk', 'Mauerwerk (allgemein)'], ['ziegel', 'Hochlochziegel'], ['ks', 'Kalksandstein'], ['porenbeton', 'Porenbeton (Ytong)'], ['beton', 'Stahlbeton'], ['leichtbeton', 'Leichtbeton / Bims'], ['trockenbau', 'Trockenbau (GK, Metallständer)'], ['holz', 'Holzständer'], ['glasbaustein', 'Glasbaustein']];
 const PREV = { color: '#2563eb', w: 0.35 };
 
@@ -32,18 +34,18 @@ export class Tool {
   /** getippte Eingabe → Punkt relativ zum letzten Punkt */
   typedPoint(txt) {
     const from = this.from(); txt = txt.trim().replace(/\s+/g, '');
-    const num = (s) => G.parseLen(s, 'mm');
+    const num = (s) => G.parseMass(s);
     if (/^@?-?[\d.,]+[;:]-?[\d.,]+$/.test(txt)) {
       const rel = txt.startsWith('@') || !!from; const [a, b] = txt.replace('@', '').split(/[;:]/).map(num);
       if (!isFinite(a) || !isFinite(b)) return null; return rel && from ? { x: from.x + a, y: from.y + b } : { x: a, y: b };
     }
-    if (/^-?[\d.,]+(mm|cm|m)?<-?[\d.,]+$/.test(txt)) { const [l, w] = txt.split('<'); const L = num(l), ang = G.rad(parseFloat(w.replace(',', '.'))); if (!from) return null; return G.add(from, G.fromAngle(ang, L)); }
+    if (/^-?[\d.,]+(mm|cm|m)?<-?[\d.,]+$/.test(txt)) { const [l, w] = txt.split('<'); const L = Math.abs(num(l)), ang = G.rad(parseFloat(w.replace(',', '.'))); if (!from) return null; return G.add(from, G.fromAngle(ang, L)); }
     const L = num(txt); if (!isFinite(L) || !from) return null;
     const cur = this.app.cursor ? this.app.cursor.p : null; let dir = cur ? G.sub(cur, from) : { x: 1, y: 0 };
     if (G.len(dir) < 1e-6) dir = { x: 1, y: 0 };
     return G.add(from, G.mul(G.norm(dir), L));
   }
-  lenLabel(a, b) { return `${G.fmtCm(G.dist(a, b))} cm · ${Math.round((G.deg(Math.atan2(b.y - a.y, b.x - a.x)) + 360) % 360)}°`; }
+  lenLabel(a, b) { return `${G.fmtLaenge(G.dist(a, b))} · ${Math.round((G.deg(Math.atan2(b.y - a.y, b.x - a.x)) + 360) % 360)}°`; }
 }
 
 /* ───────── Auswahl ───────── */
@@ -113,7 +115,24 @@ export class SelectTool extends Tool {
 /* ───────── Wand ───────── */
 export class WallTool extends Tool {
   constructor(app, opt) { super(app, opt); this.mode = opt.mode || 'kette'; this.chain = []; this.closed = false; }
-  hint() { return this.mode === 'rechteck' ? 'Erste Ecke klicken, dann gegenüberliegende Ecke · Maß tippen: Breite;Tiefe (z. B. 3510;2800)' : 'Startpunkt klicken, weitere Punkte klicken · Länge tippen + Enter · Rechtsklick/Esc beendet · Startpunkt anklicken schließt'; }
+  hint() { return this.mode === 'rechteck' ? 'Erste Ecke klicken, dann gegenüberliegende Ecke · Maß tippen: Breite;Tiefe (z. B. 10,49;8,99) · oder unten Breite/Tiefe fest eingeben' : 'Startpunkt klicken, weitere Punkte klicken · Länge tippen + Enter (20,25 = m) · unten „Länge“ fest eingeben, dann nur noch die Richtung zeigen · Rechtsklick/Esc beendet · Startpunkt anklicken schließt'; }
+  /** Rechteck: Zielpunkt kommt nicht über die Richtungsbindung (sonst würde die Diagonale gerastert) */
+  from() { return this.mode === 'rechteck' ? null : super.from(); }
+  get masz() { return this.app.masz || (this.app.masz = { L: null, behalten: false, B: null, T: null }); }
+  /** Nächster Punkt mit fester Länge: Richtung vom Zeiger, Länge vom eingegebenen Maß */
+  ziel(p) {
+    const L = this.masz.L; if (this.mode !== 'kette' || !this.pts.length || !(L > 0)) return p;
+    const a = this.pts[this.pts.length - 1]; const d = G.sub(p, a); if (G.len(d) < 1e-6) return null;
+    return G.add(a, G.mul(G.norm(d), L));
+  }
+  /** Rechteck: feste Breite/Tiefe (Richtung = Quadrant des Zeigers), sonst Seiten einzeln auf runde Werte */
+  rechteckZiel(a, p, kind) {
+    const m = this.masz; const st = laengenSchritt(this.app); const hart = HART.has(kind);
+    let dx = p.x - a.x, dy = p.y - a.y;
+    if (m.B > 0) dx = (dx < 0 ? -1 : 1) * m.B; else if (!hart) dx = Math.round(dx / st) * st;
+    if (m.T > 0) dy = (dy < 0 ? -1 : 1) * m.T; else if (!hart) dy = Math.round(dy / st) * st;
+    return { x: a.x + dx, y: a.y + dy };
+  }
   options() {
     const S = this.S;
     return [
@@ -143,13 +162,54 @@ export class WallTool extends Tool {
   }
   down(ev) {
     if (ev.button === 2) { this.finish(); return; }
-    const p = this.app.cursor.p;
-    if (this.mode === 'rechteck') {
-      if (!this.pts.length) { this.pts = [p]; return; }
-      this.makeRect(this.pts[0], p); return;
+    const cur = this.app.cursor;
+    // Finger/Stift: drücken – ziehen – loslassen; der Punkt entsteht beim Loslassen (Vorschau folgt dem Finger)
+    if (ev.pointerType && ev.pointerType !== 'mouse') {
+      this.druck = { sx: ev.sx, sy: ev.sy, hatte: this.pts.length > 0 };
+      if (!this.pts.length) { this.pts = [G.clone(cur.p)]; this.app.redraw(); }
+      return;
     }
-    this.addPoint(p);
+    this.platzieren(cur.p, cur.kind);
   }
+  up(ev) {
+    const d = this.druck; this.druck = null; if (!d) return;
+    const gezogen = Math.hypot(ev.sx - d.sx, ev.sy - d.sy) > 12;
+    if (!d.hatte && !gezogen) { this.app.massLeiste && this.app.massLeiste(); return; } // nur Startpunkt getippt
+    const cur = this.app.cursor; this.platzieren(cur.p, cur.kind);
+  }
+  /** Zweiter Finger (Zoomen) – angefangenen Startpunkt wieder verwerfen */
+  druckAbbrechen() { const d = this.druck; this.druck = null; if (d && !d.hatte) { this.pts = []; this.app.redraw(); } }
+  platzieren(p, kind) {
+    if (this.mode === 'rechteck') {
+      if (!this.pts.length) { this.pts = [G.clone(p)]; this.app.massLeiste && this.app.massLeiste(); return; }
+      this.makeRect(this.pts[0], this.rechteckZiel(this.pts[0], p, kind)); return;
+    }
+    if (!this.pts.length) { this.addPoint(p); this.app.massLeiste && this.app.massLeiste(); return; }
+    const q = this.ziel(p); if (!q) return;
+    const fest = this.masz.L > 0;
+    const n = this.pts.length; this.addPoint(q);
+    if (fest && (this.pts.length > n || !this.pts.length) && !this.masz.behalten) this.masz.L = null;
+    this.app.massLeiste && this.app.massLeiste();
+  }
+  /** Länge der zuletzt gezeichneten Wand (Bezugslinie) */
+  letzteLaenge() { const n = this.pts.length; return this.mode === 'kette' && n >= 2 ? G.dist(this.pts[n - 2], this.pts[n - 1]) : null; }
+  /** Zuletzt gezeichnete Wand nachträglich exakt auf Länge bringen (Richtung bleibt, Endpunkt wandert) */
+  letzteSetzen(L) {
+    const n = this.pts.length; if (this.mode !== 'kette' || n < 2 || !(L > 0)) return false;
+    const a = this.pts[n - 2], u = G.norm(G.sub(this.pts[n - 1], a));
+    this.doc.change('Wandlänge', () => { this.pts[n - 1] = G.add(a, G.mul(u, L)); this.rebuildChain(); });
+    this.app.redraw(); this.app.massLeiste && this.app.massLeiste(); return true;
+  }
+  /** letzte Wand des Zugs entfernen (Knopf „Zurück“ / Rücktaste) */
+  zurueck() {
+    if (this.mode !== 'kette' || !this.pts.length) return false;
+    if (this.pts.length === 1) { this.reset(); this.app.massLeiste && this.app.massLeiste(); return true; }
+    const id = this.chain.pop(); this.pts.pop();
+    this.doc.change('Wand zurück', () => { if (id) this.doc.remove([id]); this.rebuildChain(); });
+    this.app.redraw(); this.app.massLeiste && this.app.massLeiste(); return true;
+  }
+  /** Wandzug zum Startpunkt schließen */
+  schliessen() { if (this.mode !== 'kette' || this.pts.length < 3) return false; this.addPoint(this.pts[0]); this.app.massLeiste && this.app.massLeiste(); return true; }
   addPoint(p) {
     if (!this.pts.length) { this.pts = [G.clone(p)]; this.app.redraw(); return; }
     const last = this.pts[this.pts.length - 1]; if (G.dist(last, p) < 5) return;
@@ -170,34 +230,37 @@ export class WallTool extends Tool {
     this.pts = []; this.app.toast(`Raum ${G.fmtCm(Math.abs(b.x - a.x))} × ${G.fmtCm(Math.abs(b.y - a.y))} cm angelegt`);
     this.app.autoRooms();
   }
-  reset() { this.pts = []; this.chain = []; this.closed = false; if (this.app.abPending) this.app.abPending = null; this.app.redraw(); this.app.autoRooms(); }
+  reset() { this.pts = []; this.chain = []; this.closed = false; this.druck = null; if (this.app.abPending) this.app.abPending = null; this.app.redraw(); this.app.autoRooms(); this.app.massLeiste && this.app.massLeiste(); }
   finish() { this.reset(); }
   cancel() { if (this.pts.length) { this.reset(); return true; } return false; }
-  key(e) { if (e.key === 'Backspace' && this.pts.length > 1 && this.mode === 'kette') { this.doc.undo(); this.pts.pop(); this.chain.pop(); this.app.redraw(); return true; } return false; }
+  key(e) { if (e.key === 'Backspace' && this.pts.length > 1 && this.mode === 'kette') return this.zurueck(); return false; }
   enter(txt) {
     if (this.mode === 'rechteck') {
-      const m = txt.split(/[;x×*]/i).map(s => G.parseLen(s, 'mm'));
+      const m = txt.split(/[;x×*]/i).map(s => G.parseMass(s));
       if (m.length === 2 && m.every(isFinite)) { const a = this.pts[0] || this.app.cursor.p; this.makeRect(a, { x: a.x + m[0], y: a.y + m[1] }); return true; }
       return false;
     }
-    const p = this.typedPoint(txt); if (!p) return false; if (!this.pts.length) { this.pts = [p]; return true; } this.addPoint(p); return true;
+    // Länge vor dem Startpunkt getippt → als feste Länge für die nächste Wand merken
+    if (!this.pts.length && /^[\d.,]+(mm|cm|m)?$/i.test(txt.trim())) { const L = G.parseMass(txt); if (L > 0) { this.masz.L = L; this.app.toast(`Länge ${G.fmtLaenge(L)} fest – jetzt Startpunkt setzen und Richtung zeigen`); this.app.massLeiste && this.app.massLeiste(); return true; } }
+    const p = this.typedPoint(txt); if (!p) return false; if (!this.pts.length) { this.pts = [p]; return true; } this.addPoint(p); this.app.massLeiste && this.app.massLeiste(); return true;
   }
   draw(P) {
     const cur = this.app.cursor; if (!cur) return; const S = this.S; const t = S.wandStaerke;
     if (this.mode === 'rechteck') {
-      if (!this.pts.length) return; const a = this.pts[0], b = cur.p;
+      if (!this.pts.length) return; const a = this.pts[0], b = this.rechteckZiel(a, cur.p, cur.kind);
       for (const [p, q] of E.rectWalls(a, b, t, S.rechteckBezug || 'innen')) P.fill([G.stripPoly(p, q, t / 2)], '#93c5fd', 0.5, { color: SEL, w: 0.18 });
       P.polyline([a, { x: b.x, y: a.y }, b, { x: a.x, y: b.y }], { color: '#dc2626', w: 0.18, dash: [2, 1] }, true);
-      this.app.dyn(`${G.fmtCm(Math.abs(b.x - a.x))} × ${G.fmtCm(Math.abs(b.y - a.y))} cm (${S.rechteckBezug === 'mitte' ? 'Achse' : S.rechteckBezug === 'aussen' ? 'außen' : 'innen'})`);
+      this.app.dyn(`${G.fmtLaenge(Math.abs(b.x - a.x))} × ${G.fmtLaenge(Math.abs(b.y - a.y))} (${S.rechteckBezug === 'mitte' ? 'Achse' : S.rechteckBezug === 'aussen' ? 'außen' : 'innen'})${this.masz.B > 0 || this.masz.T > 0 ? ' 🔒' : ''}`);
       return;
     }
     if (!this.pts.length) return;
     const sh = this.app.abstandShift ? this.app.abstandShift(this, cur.p) : { x: 0, y: 0 };
-    const a = G.add(this.pts[this.pts.length - 1], sh), b = G.add(cur.p, sh);
+    const z = this.ziel(cur.p); if (!z) return;
+    const a = G.add(this.pts[this.pts.length - 1], sh), b = G.add(z, sh);
     const off = this.refOff(); const c = E.offsetPolyline([a, b], off);
     P.fill([G.stripPoly(c[0], c[1], t / 2)], '#93c5fd', 0.55, { color: SEL, w: 0.18 });
     P.line(a, b, { color: '#dc2626', w: 0.18, dash: [2, 1] });
-    this.app.dyn(this.lenLabel(a, b));
+    this.app.dyn(this.lenLabel(a, b) + (this.masz.L > 0 ? ' 🔒' : ''));
   }
 }
 

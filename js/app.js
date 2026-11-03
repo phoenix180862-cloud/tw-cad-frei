@@ -1,23 +1,24 @@
 // TW-CAD – Hauptprogramm
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import * as E from './edit.js?v=20261028-0429';
-import { Doc, newProject, saveProject, loadProject, listProjects, deleteProject, migrate, uid } from './model.js?v=20261028-0429';
-import { View2D } from './view2d.js?v=20261028-0429';
-import { snap, SNAP_LABEL } from './snap.js?v=20261028-0429';
-import { makeTool } from './tools.js?v=20261028-0429';
-import { icon } from './icons.js?v=20261028-0429';
-import { symbolFootprint, columnPoly, dimGeometry, drawDim, drawSymbol, floorTiles, SYMBOLE } from './render2d.js?v=20261028-0429';
-import { CanvasPainter } from './painter.js?v=20261028-0429';
-import { renderProps, renderStoreys, renderLayers, renderProject } from './props.js?v=20261028-0429';
-import { demoProject } from './demo.js?v=20261028-0429';
-import * as Help from './help.js?v=20261028-0429';
-import { makeTool2 } from './tools2.js?v=20261028-0429';
-import { hydrateUnderlays } from './pdfimport.js?v=20261028-0429';
-import * as AB from './abstand.js?v=20261028-0429';
-import { treppe } from './treppe.js?v=20261028-0429';
-import * as F from './frei.js?v=20261028-0429';
-import * as I18N from './i18n.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import * as E from './edit.js?v=20261103-1900';
+import { Doc, newProject, saveProject, loadProject, listProjects, deleteProject, migrate, uid } from './model.js?v=20261103-1900';
+import { View2D } from './view2d.js?v=20261103-1900';
+import { snap, SNAP_LABEL } from './snap.js?v=20261103-1900';
+import { makeTool } from './tools.js?v=20261103-1900';
+import { icon } from './icons.js?v=20261103-1900';
+import { symbolFootprint, columnPoly, dimGeometry, drawDim, drawSymbol, floorTiles, SYMBOLE } from './render2d.js?v=20261103-1900';
+import { CanvasPainter } from './painter.js?v=20261103-1900';
+import { renderProps, renderStoreys, renderLayers, renderProject } from './props.js?v=20261103-1900';
+import { demoProject } from './demo.js?v=20261103-1900';
+import * as Help from './help.js?v=20261103-1900';
+import { makeTool2 } from './tools2.js?v=20261103-1900';
+import { hydrateUnderlays } from './pdfimport.js?v=20261103-1900';
+import * as AB from './abstand.js?v=20261103-1900';
+import { treppe } from './treppe.js?v=20261103-1900';
+import * as F from './frei.js?v=20261103-1900';
+import * as I18N from './i18n.js?v=20261103-1900';
+import * as ML from './massleiste.js?v=20261103-1900';
 const { t } = I18N;
 
 // Zwei-Bildschirm-Modus: Bedienelemente können im Werkzeug-Fenster (zweiter Bildschirm) liegen
@@ -61,7 +62,7 @@ class App {
     this.view = new View2D(this, $('#cv'));
     this.buildTop(); this.buildToggles(); this.bindKeys(); this.bindCmd();
     this.setMode('grundriss'); this.setTool('select');
-    if (!F.FREI) import('./driveprojekt.js?v=20261028-0429').then(DP => DP.autoSichern(this)).catch(() => { });
+    if (!F.FREI) import('./driveprojekt.js?v=20261103-1900').then(DP => DP.autoSichern(this)).catch(() => { });
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); this._installEvt = e; if (F.FREI) this.buildTop(); });
     window.addEventListener('appinstalled', () => { this._installEvt = null; if (F.FREI) { this.buildTop(); this.toast('TW-CAD ist installiert – du findest es jetzt im Startmenü / auf dem Home-Bildschirm.'); } });
     $('#cmd').placeholder = this.cmdPlatzhalter();
@@ -126,7 +127,7 @@ class App {
   refreshTitle() { $('#projName').value = this.doc.p.name; document.title = this.doc.p.name + ' – TW-CAD'; if (uiDoc) uiDoc.title = 'Werkzeuge – ' + this.doc.p.name; }
   buildToggles() {
     const t = $('#toggles'); t.innerHTML = ''; const S = () => this.doc.p.settings;
-    const mk = (key, label, title) => { const btn = h('button', { title, onclick: () => { S()[key] = !S()[key]; btn.classList.toggle('on', !!S()[key]); this.redraw(); } }, label); btn.classList.toggle('on', !!S()[key]); return btn; };
+    const mk = (key, label, title) => { const btn = h('button', { title, onclick: () => { S()[key] = !S()[key]; btn.classList.toggle('on', !!S()[key]); this.redraw(); if (key === 'orthoAn') this.massLeiste(); } }, label); btn.classList.toggle('on', !!S()[key]); return btn; };
     t.append(mk('rasterAn', 'RASTER', 'Raster/Rasterfang (F7)'), mk('fangAn', 'FANG', 'Objektfang (F3)'), mk('orthoAn', 'ORTHO', 'Nur waagrecht/senkrecht (F8)'), mk('spurAn', 'SPUR', 'Spurlinien (F10)'), mk('abstandAn', 'ABSTAND', 'Abstandsmaße zu den Wänden beim Zeichnen (F9) · Tab wählt das Maß · Zahl + Enter setzt den Punkt exakt'));
     const MS = [1, 5, 10, 20, 25, 50, 75, 100, 200, 250, 500, 1000]; const akt = this.massstab();
     const sel = h('select', { class: 'ms-sel', title: 'Bezugsmaßstab der Zeichnung – bestimmt Schrift-, Maß- und Liniengrößen und den Plandruck (wie in ArchiCAD/Allplan). Gezeichnet wird immer in echten Maßen.', onchange: (e) => this.massstabSetzen(e.target.value) });
@@ -150,7 +151,7 @@ class App {
       const [el, mod] = map[m]; $('#' + el).classList.remove('hidden');
       try { const M = await import(mod + new URL(import.meta.url).search); this.modeView = M.mount(this, $('#' + el)); } catch (e) { console.error(e); this.toast('Ansicht konnte nicht geladen werden: ' + e.message, true); }
     }
-    this.renderSide(); Help.context(this.helpContext());
+    this.renderSide(); Help.context(this.helpContext()); this.massLeiste();
   }
   buildToolbox() {
     const tb = $('#toolbox'); tb.innerHTML = '';
@@ -167,7 +168,7 @@ class App {
     if (this.tool) this.tool.cancel();
     this.toolName = name; this.tool = makeTool2(this, name, opt) || makeTool(this, name, opt); this.ab = { manual: null, lock: null };
     $$('#toolbox .tool').forEach(b => b.classList.toggle('on', b.dataset.t === name));
-    this.refreshOpt(); this.refreshHint(); this.redraw(); this.dyn(null);
+    this.refreshOpt(); this.refreshHint(); this.redraw(); this.dyn(null); ML.padZu(); this.massLeiste();
     Help.context(this.helpContext());
     $('#cv').style.cursor = name === 'select' ? 'default' : name === 'erase' ? 'not-allowed' : 'crosshair'; this.updateDelBtn && this.updateDelBtn();
   }
@@ -256,7 +257,8 @@ class App {
     this.tool.down(ev); if (this.tool.up) this.tool.up(ev);
     if (msg) this.toast(msg); this.refreshHint(); this.redraw();
   }
-  refreshHint() { $('#hint').textContent = this.tool ? (this.tool.hint() || '') + (this.abstandFrei() ? (this.ab.lock ? ' · Abstand fest: entlang der orangen Linie klicken oder 2. Maß tippen' : ' · ABSTAND: Tab wählt Maß, Zahl + Enter (2400 = mm, 240cm, 2,40 = m, oder 240cm;120cm)') : '') : ''; $('#cmdLabel').textContent = this.tool && this.tool.pts && this.tool.pts.length ? 'Länge/Punkt' : (F.einstieg() ? 'Maß' : 'Befehl'); }
+  massLeiste() { try { ML.render(this); } catch (e) { console.error(e); } }
+  refreshHint() { $('#hint').textContent = this.tool ? (this.tool.hint() || '') + (this.abstandFrei() ? (this.ab.lock ? ' · Abstand fest: entlang der orangen Linie klicken oder 2. Maß tippen' : ' · ABSTAND: Tab wählt Maß, Zahl + Enter (2400 = mm, 240cm, 2,40 = m, oder 240cm;120cm)') : '') : ''; $('#cmdLabel').textContent = this.tool && this.tool.pts && this.tool.pts.length ? 'Länge/Punkt' : (F.einstieg() ? 'Maß' : 'Befehl'); this.massLeiste(); }
   refreshOpt() {
     const bar = $('#optbar'); bar.innerHTML = ''; if (!this.tool) return;
     const all = TOOLS.concat(SITE_TOOLS).flatMap(g => g.items); const def = all.find(x => x[0] === this.toolName);
@@ -340,8 +342,9 @@ class App {
     }
     this.cursor = r; return r;
   }
-  pointerDown(ev) { this.snapAt(ev, this.tool.from ? this.tool.from() : null); const lock = this.ab.lock; this.tool.down(ev); if (lock && ev.button !== 2) { this.ab = { manual: null, lock: null }; this.abstandMerken([{ dir: lock.dir, val: lock.val }]); } this.refreshHint(); this.redraw(); }
+  pointerDown(ev) { this.zeigerGrob = !!ev.pointerType && ev.pointerType !== 'mouse'; this.snapAt(ev, this.tool.from ? this.tool.from() : null); const lock = this.ab.lock; this.tool.down(ev); if (lock && ev.button !== 2) { this.ab = { manual: null, lock: null }; this.abstandMerken([{ dir: lock.dir, val: lock.val }]); } this.refreshHint(); this.redraw(); }
   pointerMove(ev) {
+    if (ev.pointerType) this.zeigerGrob = ev.pointerType !== 'mouse';
     this.snapAt(ev, this.tool.from ? this.tool.from() : null);
     this.tool.move(ev);
     const p = this.cursor.p; $('#coords').textContent = `x ${G.fmtCm(p.x)} · y ${G.fmtCm(p.y)} cm`;
@@ -350,7 +353,7 @@ class App {
   }
   pointerUp(ev) { this.tool.up(ev); this.redraw(); }
   dblClick(ev) { this.tool.dbl(ev); }
-  cancelPress() { if (this.tool && this.tool.drag) this.tool.drag = null; }
+  cancelPress() { if (this.tool && this.tool.drag) this.tool.drag = null; if (this.tool && this.tool.druckAbbrechen) this.tool.druckAbbrechen(); }
   trackPush(p) { if (this.track.some(q => G.dist(q, p) < 1)) return; this.track.push(G.clone(p)); if (this.track.length > 4) this.track.shift(); }
   dyn(txt, keep) {
     const el = $('#dynIn'); if (!txt) { if (!keep) el.classList.add('hidden'); else el.classList.add('hidden'); return; }
@@ -361,9 +364,15 @@ class App {
   onViewChange() { }
   /** Bezugsmaßstab der aktuellen Zeichnung (Grundriss/Fliesen 1:50, Lageplan 1:200 …) */
   massstab() { const S = this.doc.p.settings; return this.mode === 'lageplan' ? (S.massstabLage || 200) : (S.massstab || 50); }
-  massstabSetzen(m) { const S = this.doc.p.settings; if (this.mode === 'lageplan') S.massstabLage = +m; else S.massstab = +m; this.scheduleSave(); this.buildToggles(); this.redraw(); this.toast(`Maßstab 1:${m} – Texte, Maße, Linienstärken und Plandruck richten sich danach`); }
-  /** Zoom auf echte Papiergröße: 1 cm auf dem Bildschirm = 1 cm auf dem Ausdruck */
-  papierZoom() { const v = this.view; const px = 96 / 25.4; const c = v.toWorld(v.w / 2, v.h / 2); v.tf.s = px / this.massstab(); v.tf.ox = v.w / 2 - c.x * v.tf.s; v.tf.oy = v.h / 2 + c.y * v.tf.s; v.need = true; }
+  /** Maßstab umstellen: Zeichnung wird wie auf dem Papier dargestellt – 1:50 doppelt so groß wie 1:100 (Ansicht folgt dem Maßstab, 31.10.2026) */
+  massstabSetzen(m) { const S = this.doc.p.settings; if (this.mode === 'lageplan') S.massstabLage = +m; else S.massstab = +m; this.scheduleSave(); this.buildToggles(); this.papierZoom(); this.redraw(); this.toast(`Maßstab 1:${m} – Ansicht in Papiergröße`); }
+  /** Zoom auf echte Papiergröße: 1 cm auf dem Bildschirm = 1 cm auf dem Ausdruck. Mitte bleibt; läge die Zeichnung danach außerhalb, wird auf sie zentriert. */
+  papierZoom() {
+    const v = this.view; if (!v) return; const px = 96 / 25.4; const c = v.toWorld(v.w / 2, v.h / 2); v.tf.s = px / this.massstab(); v.tf.ox = v.w / 2 - c.x * v.tf.s; v.tf.oy = v.h / 2 + c.y * v.tf.s;
+    let bb = null; try { for (const e of this.doc.all(null, this.doc.p.activeStorey)) { const b = this.elementBBox(e); if (b) bb = G.bboxUnion(bb, b); } } catch (e) { }
+    if (bb && isFinite(bb.x0)) { const a = v.toWorld(0, v.h), b = v.toWorld(v.w, 0); const sichtbar = bb.x1 >= a.x && bb.x0 <= b.x && bb.y1 >= a.y && bb.y0 <= b.y; if (!sichtbar) { const mx = (bb.x0 + bb.x1) / 2, my = (bb.y0 + bb.y1) / 2; v.tf.ox = v.w / 2 - mx * v.tf.s; v.tf.oy = v.h / 2 + my * v.tf.s; } }
+    v.need = true; v.redraw && v.redraw();
+  }
   zoomFit() {
     if (!this.view) return; let bb = null;
     if (this.mode === 'lageplan') { const s = this.doc.p.site; const pts = [...s.punkte, ...(s.grenze || []), ...s.nachbarn.flatMap(n => n.poly)]; if (pts.length) bb = G.bbox(pts); }
@@ -400,7 +409,7 @@ class App {
   }
   drawHighlight(P, e) {
     const st = { color: '#2563eb', w: 0.5 };
-    if (e.type === 'wall') { const geo = W.storeyGeometry(this.doc, e.storey); const g = geo.wg.get(e.id); if (g) P.fill([g.poly], '#3b82f6', 0.25, st); }
+    if (e.type === 'wall') { const geo = W.storeyGeometry(this.doc, e.storey); const g = geo.wg.get(e.id); if (g) P.fill([g.poly], '#3b82f6', 0.25, st); if (this.selection.size === 1 && this.view) { const r = 5 / this.view.tf.s, L = G.dist(e.a, e.b), u = G.norm(G.sub(e.b, e.a)), k = Math.min(L / 3, 16 / this.view.tf.s); P.circle(G.add(e.a, G.mul(u, k)), r, { color: '#fff', w: 0.3 }, '#16a34a'); P.circle(G.sub(e.b, G.mul(u, k)), r, { color: '#fff', w: 0.3 }, '#dc2626'); } }
     else if (e.type === 'opening') { const geo = W.storeyGeometry(this.doc, e.storey); const oi = geo.openings.find(o => o.o.id === e.id); if (oi) P.fill([oi.rect], '#3b82f6', 0.3, st); }
     else if (e.type === 'room' && e.poly) P.fill([e.poly], '#3b82f6', 0.08, { color: '#2563eb', w: 0.35, dash: [2, 1] });
     else if (e.type === 'line' || e.type === 'guide') P.line(e.a, e.b, st);
@@ -544,8 +553,8 @@ class App {
       if (e.key === ' ' && !inField) this.spaceDown = true;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !inField) { e.preventDefault(); this.undo(); return; }
       if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z')) && !inField) { e.preventDefault(); this.redo(); return; }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !F.FREI) { e.preventDefault(); import('./ki-plus.js?v=20261028-0429').then(K => K.befehlsLeiste(this)); return; }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's' && !F.FREI) { e.preventDefault(); import('./driveprojekt.js?v=20261028-0429').then(DP => DP.speichern(this)); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !F.FREI) { e.preventDefault(); import('./ki-plus.js?v=20261103-1900').then(K => K.befehlsLeiste(this)); return; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's' && !F.FREI) { e.preventDefault(); import('./driveprojekt.js?v=20261103-1900').then(DP => DP.speichern(this)); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); this.saveNow(true); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && !inField) { this.clip = [...this.selection]; this.toast(`${this.clip.length} Element(e) kopiert`); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && !inField && this.clip) { const n = this.doc.change('Einfügen', () => E.copyElements(this.doc, this.clip, E.moveFn({ x: 500, y: -500 }))); this.select(n.map(x => x.id)); return; }
@@ -554,7 +563,7 @@ class App {
       if (e.key === 'F9') { e.preventDefault(); this.toggleAbstand(); return; }
       if (e.key === 'Tab' && this.abstandFrei() && !(e.target.id === 'cmd' && e.target.value)) { e.preventDefault(); this.abstandTab(e.shiftKey); return; }
       if (e.key === 'F11' && !fremd) return; // F11 = Vollbild des Browsers
-      if (['F3', 'F7', 'F8', 'F10'].includes(e.key)) { e.preventDefault(); const k = { F3: 'fangAn', F7: 'rasterAn', F8: 'orthoAn', F10: 'spurAn' }[e.key]; this.doc.p.settings[k] = !this.doc.p.settings[k]; this.buildToggles(); this.redraw(); return; }
+      if (['F3', 'F7', 'F8', 'F10'].includes(e.key)) { e.preventDefault(); const k = { F3: 'fangAn', F7: 'rasterAn', F8: 'orthoAn', F10: 'spurAn' }[e.key]; this.doc.p.settings[k] = !this.doc.p.settings[k]; this.buildToggles(); this.redraw(); this.massLeiste(); return; }
       if (this.mode !== 'grundriss' && this.mode !== 'lageplan') return;
       if (e.key === 'Escape' && this.ab.lock) { this.ab = { manual: null, lock: null }; this.refreshHint(); this.redraw(); return; }
       if (e.key === 'Escape') { if (!this.tool.cancel()) { if (this.toolName !== 'select') this.setTool('select'); else { this.selection.clear(); this.selChanged(); } } this.dyn(null); this.refreshHint(); return; }
@@ -696,7 +705,7 @@ class App {
   /** Fliesen-Studio (großes Fliesen-Fenster) – für Raum/Fliesenfläche (sonst ausgewählter oder erster Raum) */
   async openStudio(roomId, ziel) {
     if (!roomId) { const sel = [...this.selection].map(id => this.doc.byId(id)).find(e => e && (e.type === 'room' || e.type === 'tilezone')); roomId = sel ? sel.id : (this.mode === 'fliesen' && this.modeView ? this.modeView.roomId : null); }
-    const M = await import('./fliesenstudio.js?v=20261028-0429');
+    const M = await import('./fliesenstudio.js?v=20261103-1900');
     return M.openStudio(this, { roomId, ziel, onClose: () => { if (this.mode === 'fliesen' && this.modeView && this.modeView.refresh) this.modeView.refresh(); this.redraw(); this.renderSide(); } });
   }
   /** Neuer Plan: leeres Blatt – vorher fragen, ob der jetzige Plan behalten werden soll */
@@ -705,7 +714,7 @@ class App {
     const starten = async (behalten) => {
       close && close();
       const altJson = JSON.stringify(alt.p); const altId = alt.p.id; const altName = alt.p.name;
-      if (behalten) { alt.p.name = name.value.trim() || altName; await this.saveNow(); if (!F.FREI && alt.p.meta && alt.p.meta.drive && alt.p.meta.drive.id) import('./driveprojekt.js?v=20261028-0429').then(DP => DP.speichern(this, { still: true })).catch(() => { }); }
+      if (behalten) { alt.p.name = name.value.trim() || altName; await this.saveNow(); if (!F.FREI && alt.p.meta && alt.p.meta.drive && alt.p.meta.drive.id) import('./driveprojekt.js?v=20261103-1900').then(DP => DP.speichern(this, { still: true })).catch(() => { }); }
       else { try { await deleteProject(altId); } catch (e) { } }
       const d = new Date(); const p = newProject(t('Plan') + ' ' + d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
       p.settings = Object.assign(p.settings, JSON.parse(JSON.stringify(alt.p.settings || {}))); p.meta.planer = (alt.p.meta && alt.p.meta.planer) || p.meta.planer;
@@ -733,8 +742,8 @@ class App {
       h('button', { class: 'btn', onclick: async () => { await this.saveNow(); this.setDoc(new Doc(demoProject())); this.refreshTitle(); this.setMode('grundriss'); close(); } }, 'Beispielprojekt laden'),
       h('button', { class: 'btn', onclick: () => { close(); this.openFile(); } }, 'Datei öffnen (.twcad)'),
       h('button', { class: 'btn', onclick: () => this.downloadProject() }, 'Aktuelles Projekt als Datei sichern'),
-      h('button', { class: 'btn', onclick: async () => { close(); const X = await import('./dxfimport.js?v=20261028-0429'); X.openDxfImport(this); } }, 'DXF-Zeichnung importieren')));
-    if (!F.FREI) { const DP = await import('./driveprojekt.js?v=20261028-0429'); body.append(DP.abschnitt(this, () => close())); }
+      h('button', { class: 'btn', onclick: async () => { close(); const X = await import('./dxfimport.js?v=20261103-1900'); X.openDxfImport(this); } }, 'DXF-Zeichnung importieren')));
+    if (!F.FREI) { const DP = await import('./driveprojekt.js?v=20261103-1900'); body.append(DP.abschnitt(this, () => close())); }
     else body.append(h('div', { class: 'note' }, h('b', {}, 'Wichtig: '), 'Deine Projekte liegen nur in diesem Browser auf diesem Gerät. Sichere sie regelmäßig mit „Aktuelles Projekt als Datei sichern“ (.twcad-Datei, z. B. auf USB-Stick oder in deine Cloud) – mit „Datei öffnen“ holst du sie zurück, auch auf einem anderen Gerät.'));
     if (F.FREI) body.append(h('div', { class: 'sec' }, h('h4', {}, 'TW-CAD als App'), this.installStatus() === 'installiert' ? h('div', { class: 'muted' }, 'Läuft als installierte App – funktioniert auch ohne Internet (nur die Hilfe-Videos brauchen Internet).') : h('button', { class: 'btn', onclick: () => { close(); this.installieren(); } }, '⬇ Als App installieren (Startmenü/Desktop bzw. Home-Bildschirm, offline nutzbar)')));
     else body.append(h('div', { class: 'sec' }, h('h4', {}, 'TW-CAD als App'), matchMedia('(display-mode: standalone)').matches ? h('div', { class: 'muted' }, 'Läuft als installierte App – funktioniert auch ohne Internet (KI, Drive und Hilfe-Videos brauchen Internet).') :
@@ -748,9 +757,9 @@ class App {
     const close = this.modal('Projekte', body);
   }
   async importDialog() {
-    if (F.FREI) { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261028-0429'); X.openDxfImport(this, f); } else { const M = await import('./pdfimport.js?v=20261028-0429'); M.openImport(this, { file: f }); } return; }
-    const M = await import('./pdfimport.js?v=20261028-0429'); const P = await import('./planwahl.js?v=20261028-0429');
-    P.openPlanwahl(this, { titel: 'Plan aus der Baustelle', onWahl: (f, page, d, b) => { this.linkBaustelle(b); M.openImport(this, { file: f, page }); }, onEigeneDatei: async () => { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf,.dwg'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261028-0429'); X.openDxfImport(this, f); } else M.openImport(this, { file: f }); } });
+    if (F.FREI) { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261103-1900'); X.openDxfImport(this, f); } else { const M = await import('./pdfimport.js?v=20261103-1900'); M.openImport(this, { file: f }); } return; }
+    const M = await import('./pdfimport.js?v=20261103-1900'); const P = await import('./planwahl.js?v=20261103-1900');
+    P.openPlanwahl(this, { titel: 'Plan aus der Baustelle', onWahl: (f, page, d, b) => { this.linkBaustelle(b); M.openImport(this, { file: f, page }); }, onEigeneDatei: async () => { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf,.dwg'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261103-1900'); X.openDxfImport(this, f); } else M.openImport(this, { file: f }); } });
   }
   /** Offline-Fähigkeit: Service Worker registrieren und alle Programmdateien vorab speichern */
   async offlineEinrichten() {
@@ -861,11 +870,11 @@ class App {
     this.doc.change('Baustelle zugeordnet', () => { m.baustelle = { id: b.id, name: b.name }; if (!m.bauvorhaben) m.bauvorhaben = b.name; });
     this.toast('Projekt der Baustelle „' + b.name + '“ zugeordnet'); this.renderSide();
   }
-  async aiDialog() { if (F.FREI) return; const M = await import('./ai.js?v=20261028-0429'); M.openAI(this); }
+  async aiDialog() { if (F.FREI) return; const M = await import('./ai.js?v=20261103-1900'); M.openAI(this); }
   settingsDialog() {
     const S = this.doc.p.settings; const body = h('div', { class: 'grid2' });
     const f = (label, key, type = 'number') => { const i = h('input', { type, value: S[key] ?? '' }); i.onchange = () => { S[key] = type === 'number' ? +i.value : i.value; this.redraw(); }; return h('div', { class: 'row' }, h('label', {}, label), i); };
-    const sel = (label, key, values) => { const s = h('select', {}); for (const [v, l] of values) s.append(h('option', { value: v, selected: String(S[key]) === String(v) }, l)); s.onchange = () => { S[key] = isNaN(+s.value) ? s.value : +s.value; this.redraw(); }; return h('div', { class: 'row' }, h('label', {}, label), s); };
+    const sel = (label, key, values) => { const s = h('select', {}); for (const [v, l] of values) s.append(h('option', { value: v, selected: String(S[key]) === String(v) }, l)); s.onchange = () => { S[key] = isNaN(+s.value) ? s.value : +s.value; if (key === (this.mode === 'lageplan' ? 'massstabLage' : 'massstab')) { this.massstabSetzen(+s.value); return; } this.redraw(); }; return h('div', { class: 'row' }, h('label', {}, label), s); };
     if (!S.massstab) S.massstab = 50; if (!S.massstabLage) S.massstabLage = 200;
     body.append(f('Raster (mm)', 'raster'), f('Winkelfang (°)', 'winkelRaster'), sel('Maßstab Grundriss / Schnitt (Bezugsmaßstab)', 'massstab', [[1, '1:1'], [5, '1:5'], [10, '1:10'], [20, '1:20'], [25, '1:25'], [50, '1:50'], [75, '1:75'], [100, '1:100'], [200, '1:200'], [250, '1:250'], [500, '1:500'], [1000, '1:1000']]), sel('Maßstab Lageplan', 'massstabLage', [[1, '1:1'], [5, '1:5'], [10, '1:10'], [20, '1:20'], [25, '1:25'], [50, '1:50'], [75, '1:75'], [100, '1:100'], [200, '1:200'], [250, '1:250'], [500, '1:500'], [1000, '1:1000']]), sel('Wanddarstellung', 'wandDarstellung', [['schraffur', 'Schraffur'], ['grau', 'Grau gefüllt'], ['schwarz', 'Schwarz (Poché)']]),
       f('Mindest-Randstück (Anteil, 0,5 = halbe Fliese)', 'minRandstueck'), f('Kritisch unter (Anteil)', 'warnRandstueck'));

@@ -1,12 +1,12 @@
 // TW-CAD – Grundriss-Darstellung (Bildschirm und PDF über Painter)
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import * as T from './tiles.js?v=20261028-0429';
-import { shade } from './painter.js?v=20261028-0429';
-import { tilePatternFor } from './textures.js?v=20261028-0429';
-import { zeichneSchichten } from './aufbau.js?v=20261028-0429';
-import * as K from './katalog.js?v=20261028-0429';
-import { treppe } from './treppe.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import * as T from './tiles.js?v=20261103-1900';
+import { shade } from './painter.js?v=20261103-1900';
+import { tilePatternFor } from './textures.js?v=20261103-1900';
+import { zeichneSchichten } from './aufbau.js?v=20261103-1900';
+import * as K from './katalog.js?v=20261103-1900';
+import { treppe } from './treppe.js?v=20261103-1900';
 
 export const PEN = { fein: 0.13, duenn: 0.18, mittel: 0.25, kraeftig: 0.35, dick: 0.5, schnitt: 0.5, extra: 0.7 };
 export const STATUS_FARBE = { voll: '#ffffff', schnitt: '#dbeafe', warnung: '#fde68a', kritisch: '#fca5a5' };

@@ -1,17 +1,17 @@
 // TW-CAD – Seitenleiste: Eigenschaften, Geschosse, Ebenen, Projekt
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import * as E from './edit.js?v=20261028-0429';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn } from './render2d.js?v=20261028-0429';
-import { icon } from './icons.js?v=20261028-0429';
-import { MATERIALIEN, matById } from './material-db.js?v=20261028-0429';
-import { pickMaterial } from './matpicker.js?v=20261028-0429';
-import * as K from './katalog.js?v=20261028-0429';
-import * as B from './bauteile.js?v=20261028-0429';
-import * as T from './treppe.js?v=20261028-0429';
-import { WAND_MATERIAL } from './tools.js?v=20261028-0429';
-import * as AB from './aufbau.js?v=20261028-0429';
-import { FREI, profi } from './frei.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import * as E from './edit.js?v=20261103-1900';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn } from './render2d.js?v=20261103-1900';
+import { icon } from './icons.js?v=20261103-1900';
+import { MATERIALIEN, matById } from './material-db.js?v=20261103-1900';
+import { pickMaterial } from './matpicker.js?v=20261103-1900';
+import * as K from './katalog.js?v=20261103-1900';
+import * as B from './bauteile.js?v=20261103-1900';
+import * as T from './treppe.js?v=20261103-1900';
+import { WAND_MATERIAL } from './tools.js?v=20261103-1900';
+import * as AB from './aufbau.js?v=20261103-1900';
+import { FREI, profi } from './frei.js?v=20261103-1900';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 
@@ -60,7 +60,14 @@ export function renderProps(app, body) {
   sec.append(h('h4', {}, title));
   if (e.type === 'wall') {
     const L = G.dist(e.a, e.b);
-    sec.append(num(app, 'Länge (Achse)', () => L, v => E.setWallLength(doc, e, v), { unit: 'mm' }), num(app, 'Stärke', () => e.thickness, v => e.thickness = v, { unit: 'mm' }), num(app, 'Höhe', () => e.height || doc.storeyById(e.storey).height, v => e.height = v, { unit: 'mm' }),
+    const S = doc.p.settings; const fix = S.laengeFix || 'a';
+    const li = h('input', { type: 'text', inputmode: 'decimal', class: 'laenge-in', value: G.fmtM(L, Math.round(L) % 10 ? 3 : 2), title: 'Länge eintippen + Enter: 20,25 = Meter, 2025cm, 20250 = mm' });
+    li.onfocus = () => li.select();
+    li.onchange = () => { const v = G.parseMass(li.value); if (!(v > 0)) { app.toast('Bitte ein Maß eingeben, z. B. 20,25 (m) oder 2025cm', true); return; } doc.change('Wandlänge', () => E.setWallLength(doc, e, v, S.laengeFix || 'a')); app.autoRooms(); app.toast(`Wand jetzt ${G.fmtLaenge(v)}`); };
+    const fseg = h('div', { class: 'seg fix-seg' });
+    for (const [v, l, tt] of [['a', 'Anfang', 'Anfang (grüner Punkt) bleibt stehen, das Ende wandert'], ['mitte', 'Mitte', 'Wand wächst/schrumpft an beiden Enden gleich'], ['b', 'Ende', 'Ende (roter Punkt) bleibt stehen, der Anfang wandert']]) fseg.append(h('button', { class: ['fix-' + v, fix === v ? 'on' : ''].join(' '), title: tt, onclick: () => { S.laengeFix = v; app.renderSide(); app.redraw(); } }, l));
+    sec.append(row('Länge (Achse) m', li), h('div', { class: 'fix-zeile' }, h('span', {}, 'Beim Ändern bleibt stehen:'), fseg));
+    sec.append(num(app, 'Stärke', () => e.thickness, v => e.thickness = v, { unit: 'mm' }), num(app, 'Höhe', () => e.height || doc.storeyById(e.storey).height, v => e.height = v, { unit: 'mm' }),
       sel(app, 'Art', [['aussen', 'Außenwand'], ['innen', 'Innenwand']], () => e.art || 'innen', v => e.art = v),
       sel(app, 'Material', WAND_MATERIAL, () => e.material || 'mauerwerk', v => e.material = v),
       num(app, 'Winkel', () => (G.deg(Math.atan2(e.b.y - e.a.y, e.b.x - e.a.x)) + 360) % 360, v => { const L2 = G.dist(e.a, e.b); E.moveWallEnd(doc, e, 'b', G.add(e.a, G.fromAngle(G.rad(v), L2))); }, { unit: '°', step: 0.5 }));
@@ -286,5 +293,5 @@ export function renderProject(app, body) {
     matButton(app, 'Fassade', doc.p.settings.stdFassade || 'putz-scheibenputz', null, (id) => { doc.p.settings.stdFassade = id; app.renderSide(); }, ['Putz', 'Klinker', 'Holz', 'Metall', 'Faserzement', 'HPL', 'Naturstein', 'Keramik', 'Glas']),
     matButton(app, 'Fenster', doc.p.settings.stdFenster || 'fenster-kst-7016-aussen', null, (id) => { doc.p.settings.stdFenster = id; app.renderSide(); }, ['Fenster']),
     matButton(app, 'Haustür', doc.p.settings.stdHaustuer || 'tuer-hoermann-700b', null, (id) => { doc.p.settings.stdHaustuer = id; app.renderSide(); }, ['Haustür']))));
-  body.append(h('div', { class: 'sec' }, h('h4', {}, FREI ? 'Projekt als Datei (Sicherung)' : 'Datei'), h('div', { class: 'btns' }, h('button', { class: 'btn', title: 'ganzes Projekt als .twcad-Datei herunterladen – zum Sichern oder Weitergeben', onclick: () => app.downloadProject() }, 'Als .twcad sichern'), h('button', { class: 'btn', title: '.twcad-Datei öffnen', onclick: () => app.openFile() }, 'Öffnen …'), h('button', { class: 'btn', 'data-stufe': 'profi', onclick: async () => { const M = await import('./dxf.js?v=20261028-0429'); M.exportDXF(app); }, html: icon('dxf') + 'DXF-Export' }))));
+  body.append(h('div', { class: 'sec' }, h('h4', {}, FREI ? 'Projekt als Datei (Sicherung)' : 'Datei'), h('div', { class: 'btns' }, h('button', { class: 'btn', title: 'ganzes Projekt als .twcad-Datei herunterladen – zum Sichern oder Weitergeben', onclick: () => app.downloadProject() }, 'Als .twcad sichern'), h('button', { class: 'btn', title: '.twcad-Datei öffnen', onclick: () => app.openFile() }, 'Öffnen …'), h('button', { class: 'btn', 'data-stufe': 'profi', onclick: async () => { const M = await import('./dxf.js?v=20261103-1900'); M.exportDXF(app); }, html: icon('dxf') + 'DXF-Export' }))));
 }

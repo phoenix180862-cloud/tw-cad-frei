@@ -1,8 +1,8 @@
 // TW-CAD – Objektfang, Ortho/Polar, Spurlinien
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import { symbolFootprint, columnPoly, dimGeometry } from './render2d.js?v=20261028-0429';
-import { treppe } from './treppe.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import { symbolFootprint, columnPoly, dimGeometry } from './render2d.js?v=20261103-1900';
+import { treppe } from './treppe.js?v=20261103-1900';
 
 const PRIO = { end: 1, ecke: 1, schnitt: 2, mitte: 3, zentrum: 3, lot: 4, naechster: 6, raster: 8, spur: 7 };
 export const SNAP_LABEL = { end: 'Endpunkt', ecke: 'Ecke', schnitt: 'Schnittpunkt', mitte: 'Mitte', zentrum: 'Zentrum', lot: 'Lot', naechster: 'auf Linie', raster: 'Raster', spur: 'Spur', polar: 'Winkel', ortho: 'Ortho', abstand: 'Abstand' };
@@ -97,14 +97,14 @@ export function snap(app, raw, opt = {}) {
     const v = G.sub(raw, opt.from); const L = G.len(v);
     if (L > 0.5) {
       let ang = Math.atan2(v.y, v.x);
-      const ortho = opt.ortho ?? st.orthoAn;
-      const step = G.rad(ortho ? 90 : (st.winkelRaster || 15));
+      const ortho = opt.ortho ?? st.orthoAn; const fest = !ortho && st.winkelFest ? +st.winkelFest : 0;
+      const step = G.rad(ortho ? 90 : (fest || st.winkelRaster || 15));
       const q = Math.round(ang / step) * step;
-      const tol = ortho ? Math.PI : G.rad(3);
+      const tol = ortho || fest ? Math.PI : G.rad(app.zeigerGrob ? 6 : 3);
       if (Math.abs(q - ang) < tol) { ang = q; res.kind = ortho ? 'ortho' : 'polar'; }
-      // Länge runden (Raster) – nur ohne Objektfang
-      let len = L;
-      len = Math.round(L / (st.rasterAn ? 10 : 5)) * (st.rasterAn ? 10 : 5);
+      // Länge auf runde Werte (Längen-Schritt, Auto = nach Zoom) – nur ohne Objektfang
+      const ls = laengenSchritt(app);
+      let len = Math.max(ls, Math.round(L / ls) * ls);
       p = G.add(opt.from, G.fromAngle(ang, len));
       // auf Linie fangen entlang Richtung (Spur zu letzten Punkten)
       if (st.spurAn) for (const tp of app.track) {
@@ -123,6 +123,14 @@ export function snap(app, raw, opt = {}) {
     }
   }
   res.p = p; return res;
+}
+
+/** Schrittweite der Wandlänge beim Ziehen (mm): fest gewählt oder „Auto“ nach Zoom – mit dem Finger gröber als mit der Maus */
+export const SCHRITTE = [10, 50, 100, 250, 500, 1000];
+export function laengenSchritt(app) {
+  const v = app.doc.p.settings.laengenSchritt; if (v && v !== 'auto' && +v > 0) return +v;
+  const s = app.view && app.view.tf ? app.view.tf.s : 0.1; const px = app.zeigerGrob ? 12 : 6;
+  for (const c of SCHRITTE) if (c * s >= px) return c; return 1000;
 }
 
 export function gridStep(app) {

@@ -1,13 +1,13 @@
 // TW-CAD – Auswertungen: Raumbuch (DIN 277 / WoFlV), Tür- und Fensterliste, Bauteilmengen, Plan-Prüfung
 // Reine Rechenfunktionen (ohne DOM) – testbar mit node.
-import * as G from './geom.js?v=20261028-0429';
-import * as W from './walls.js?v=20261028-0429';
-import * as AB from './aufbau.js?v=20261028-0429';
-import * as K from './katalog.js?v=20261028-0429';
-import * as T from './treppe.js?v=20261028-0429';
-import { buildRoof } from './roof.js?v=20261028-0429';
-import { symbolFootprint, SYMBOLE, bewegungsFlaeche } from './render2d.js?v=20261028-0429';
-import { FREI } from './frei.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import * as W from './walls.js?v=20261103-1900';
+import * as AB from './aufbau.js?v=20261103-1900';
+import * as K from './katalog.js?v=20261103-1900';
+import * as T from './treppe.js?v=20261103-1900';
+import { buildRoof } from './roof.js?v=20261103-1900';
+import { symbolFootprint, SYMBOLE, bewegungsFlaeche } from './render2d.js?v=20261103-1900';
+import { FREI } from './frei.js?v=20261103-1900';
 
 const m2 = (mm2) => mm2 / 1e6;
 

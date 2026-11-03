@@ -1,10 +1,10 @@
 // TW-CAD – 2D-Ansicht: Zoom, Verschieben, Raster, Ereignisse
-import * as G from './geom.js?v=20261028-0429';
-import { CanvasPainter } from './painter.js?v=20261028-0429';
-import { drawPlan } from './render2d.js?v=20261028-0429';
-import { drawSite } from './site.js?v=20261028-0429';
-import { gridStep } from './snap.js?v=20261028-0429';
-import { tr } from './i18n.js?v=20261028-0429';
+import * as G from './geom.js?v=20261103-1900';
+import { CanvasPainter } from './painter.js?v=20261103-1900';
+import { drawPlan } from './render2d.js?v=20261103-1900';
+import { drawSite } from './site.js?v=20261103-1900';
+import { gridStep } from './snap.js?v=20261103-1900';
+import { tr } from './i18n.js?v=20261103-1900';
 
 export class View2D {
   constructor(app, canvas) {
@@ -88,7 +88,7 @@ export class View2D {
     cv.addEventListener('contextmenu', e => e.preventDefault());
     cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); const f = Math.pow(1.0015, -e.deltaY * (e.deltaMode ? 30 : 1)); this.zoomAt(e.clientX - r.left, e.clientY - r.top, f); this.app.pointerMove(this.mouseEv(e)); }, { passive: false });
     cv.addEventListener('pointerdown', e => {
-      cv.setPointerCapture(e.pointerId); this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { cv.setPointerCapture(e.pointerId); } catch (er) { } this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (this.pointers.size === 2) { this.app.cancelPress && this.app.cancelPress(); this.pinch = this.pinchState(); return; }
       if (e.button === 1 || (e.button === 0 && this.app.spaceDown) || (e.button === 2 && e.shiftKey)) { this.panning = { x: e.clientX, y: e.clientY, ox: this.tf.ox, oy: this.tf.oy }; cv.style.cursor = 'grabbing'; return; }
       this.app.pointerDown(this.mouseEv(e));

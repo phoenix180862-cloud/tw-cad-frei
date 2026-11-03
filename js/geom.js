@@ -185,6 +185,18 @@ export function fmtBau(mm) {
   const m = r / 1000; const s = (Math.floor(Math.abs(r) / 10) / 100).toFixed(2).replace('.', ','); const sup = Math.abs(r) % 10;
   return { main: (r < 0 ? '-' : '') + s, sup: sup ? String(sup) : '' };
 }
+/** Maß wie auf der Baustelle getippt: „20,25“ = m (Kommazahl unter 100), „2025cm“, „20250“ = mm, „-3,5“ mit Vorzeichen */
+export function parseMass(str) {
+  if (str == null) return NaN; let s = String(str).trim().toLowerCase().replace(/\s+/g, ''); let sg = 1;
+  if (s.startsWith('-')) { sg = -1; s = s.slice(1); } else if (s.startsWith('+')) s = s.slice(1);
+  if (/^\d*[,.]\d+$/.test(s) && parseFloat(s.replace(',', '.')) < 100) return sg * parseFloat(s.replace(',', '.')) * 1000;
+  return sg * parseLen(s, 'mm');
+}
+/** Länge lesbar: ab 1 m in Metern („20,25 m“, mit mm „20,253 m“), darunter in cm */
+export function fmtLaenge(mm) {
+  const r = Math.round(mm); if (Math.abs(r) < 1000) return fmtCm(r) + ' cm';
+  return fmtM(r, r % 10 ? 3 : 2) + ' m';
+}
 export function parseLen(str, unit = 'mm') {
   // akzeptiert "3,51" (m wenn Komma und <100), "351cm", "3510", "3.51m"
   if (str == null) return NaN; let s = String(str).trim().toLowerCase().replace(',', '.');

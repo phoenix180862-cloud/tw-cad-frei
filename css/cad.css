@@ -568,3 +568,49 @@ body.einstieg .toolbox .tgroup h6 { opacity: .9; }
 .start-sprache { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 /* lange Wörter (Polnisch, Ukrainisch …) sauber umbrechen */
 html:not([lang=de]) :is(.tool span, .tgroup h6, .side-tabs button, .fs-tab, .ls-tab span, .modal-head h3, .opt) { hyphens: auto; overflow-wrap: break-word; }
+
+/* ───── Maß-Leiste für Wände (03.11.2026) ───── */
+.masz-leiste { position: absolute; top: 10px; left: 10px; right: 10px; margin: 0 auto; width: fit-content; z-index: 25; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 6px 8px; background: rgba(24,29,36,.94); border: 1px solid var(--line2); border-radius: 12px; box-shadow: 0 6px 22px rgba(0,0,0,.28); color: var(--tx); backdrop-filter: blur(4px); touch-action: manipulation; }
+.masz-leiste.zu { padding: 3px; }
+.masz-leiste .ml-g { display: flex; align-items: center; gap: 6px; }
+.masz-leiste .ml-t { color: var(--tx2); font-size: 11.5px; white-space: nowrap; }
+.masz-leiste .ml-wert { min-height: 36px; min-width: 92px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--bg); color: var(--tx2); font: 600 14px var(--font); font-variant-numeric: tabular-nums; cursor: pointer; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; }
+.masz-leiste .ml-wert.fest { border-color: var(--acc); color: #fff; background: #1e3a64; }
+.masz-leiste .ml-wert:hover { border-color: var(--acc2); }
+.masz-leiste .ml-tast { color: var(--acc2); font-size: 13px; }
+.masz-leiste .ml-seg button { min-height: 34px; min-width: 38px; font-variant-numeric: tabular-nums; }
+.ml-btn { min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line2); background: var(--bg3); color: var(--tx); font: 600 13px var(--font); cursor: pointer; white-space: nowrap; touch-action: manipulation; }
+.ml-btn:hover { background: var(--bg4); }
+.ml-btn.klein { min-height: 32px; padding: 0 9px; font-weight: 500; color: var(--tx2); }
+.ml-btn.on { border-color: var(--acc); color: #fff; background: #1e3a64; }
+.ml-btn.pri { background: var(--acc); border-color: var(--acc); color: #fff; }
+.ml-btn.pri:hover { background: var(--acc2); }
+.ml-klapp { min-height: 30px; padding: 0 8px; border: 0; border-radius: 7px; background: transparent; color: var(--tx2); cursor: pointer; font: 600 12px var(--font); }
+.ml-klapp:hover { background: var(--bg3); color: var(--tx); }
+.masz-leiste .ml-ak { border-left: 1px solid var(--line2); padding-left: 10px; }
+/* Ziffernblock */
+.masz-pad { position: absolute; top: 64px; left: 10px; right: 10px; margin: 0 auto; z-index: 40; width: 280px; max-width: calc(100% - 20px); background: var(--bg2); border: 1px solid var(--line2); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.45); padding: 10px; color: var(--tx); }
+.mp-kopf { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+.mp-x { border: 0; background: transparent; color: var(--tx2); font-size: 16px; min-width: 36px; min-height: 36px; border-radius: 8px; cursor: pointer; }
+.mp-x:hover { background: var(--bg3); }
+.mp-zeile { display: flex; gap: 6px; align-items: stretch; margin-bottom: 8px; }
+.mp-anz { flex: 1; min-width: 0; height: 46px; text-align: right; font: 700 24px var(--font); font-variant-numeric: tabular-nums; background: var(--bg); color: #fff; border: 1px solid var(--acc); border-radius: 9px; padding: 0 10px; }
+.mp-anz:focus { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,.35); }
+.mp-einheit { flex-direction: column; }
+.mp-einheit button { padding: 1px 8px; font-size: 11.5px; }
+.mp-tasten { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.mp-t { height: 48px; border-radius: 9px; border: 1px solid var(--line2); background: var(--bg3); color: var(--tx); font: 600 20px var(--font); cursor: pointer; touch-action: manipulation; }
+.mp-t:hover { background: var(--bg4); }
+.mp-t:active { background: #1e3a64; }
+.mp-t.del { color: var(--warn); }
+.mp-fuss { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.mp-fuss .ml-btn { min-width: 96px; min-height: 44px; }
+/* Wandlänge in den Eigenschaften */
+.laenge-in { font-variant-numeric: tabular-nums; font-weight: 600; }
+.fix-zeile { display: flex; flex-direction: column; gap: 4px; margin: -2px 0 8px; color: var(--tx2); font-size: 11.5px; }
+.fix-seg { display: flex; width: 100%; }
+.fix-seg button { flex: 1 1 0; padding: 5px 4px; white-space: nowrap; font-size: 11.5px; }
+.fix-seg .fix-a::before, .fix-seg .fix-b::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 1px; background: #16a34a; box-shadow: 0 0 0 1px #fff; }
+.fix-seg .fix-b::before { background: #dc2626; }
+@media (max-width: 760px) { .masz-leiste { top: 6px; left: 6px; right: auto; margin: 0; max-width: calc(100vw - 82px); gap: 4px 6px; padding: 4px 6px; } .masz-pad { left: 6px; right: auto; margin: 0; max-width: calc(100vw - 82px); } .masz-leiste .ml-btn { padding: 0 9px; } .masz-leiste .ml-t { display: none; } .masz-leiste .ml-wert { min-width: 80px; } }
+body.no2d .masz-leiste, #app.no2d .masz-leiste { display: none; }
