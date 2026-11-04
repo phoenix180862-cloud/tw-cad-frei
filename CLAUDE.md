@@ -88,6 +88,7 @@ App-Register Nr. 03 · Drive `02_Firma/App-Zentrale/03_TW-CAD` · Live (GitHub P
 Quelle: `tw-business-suite/tw-cad/` · Verpackung: `tw-business-suite/tw-cad/tools/frei_paket.py` (Hilfe-Videos: `hilfe_videos_frei.py`)
 Modi: `?modus=einstieg` und `?modus=profi`. **Verkaufskandidat** – bei „Verkaufs-App“ gilt Abschnitt 11 (eigenes privates Repo `tw-cad-pro`, diese Geschenk-Fassung bleibt getrennt).
 Hinweis „Planungshilfe, ersetzt keine Fachplanung“ nicht entfernen.
+**Thomas, 04.11.2026 (verbindlich):** Jede Änderung an TW-CAD kommt **immer in beide Fassungen** – Thomas’ eigene (`tw-business-suite/tw-cad`) und diese Geschenk-Fassung –, auch ohne ausdrücklichen Auftrag. Weg: Quelle ändern → `frei_paket.py` → hier veröffentlichen.
 
 ### Für alle Geschenk-Fassungen gilt
 - **Dieses Repo wird erzeugt.** Quelle ist der zugehörige Ordner im privaten Repo `tw-business-suite` (Verpackungsskript `frei_paket.py`). Fehler und Verbesserungen **dort** beheben und neu verpacken – Änderungen nur hier gehen beim nächsten Paket verloren. Ausnahme: dringende Fehlerbehebung hier **und** gleichzeitig in der Quelle.
