@@ -1,13 +1,13 @@
 // TW-CAD – Ansicht „Fliesenplan“: Boden + aufgeklappte Wandabwicklung, Einstellungen, Mengen
-import * as G from './geom.js?v=20261104-0900';
-import * as W from './walls.js?v=20261104-0900';
-import * as T from './tiles.js?v=20261104-0900';
-import { CanvasPainter } from './painter.js?v=20261104-0900';
-import { drawPlan, drawTileResult, floorTiles, zoneTiles, drawDim, drawSymbol, symbolFootprint, PEN, STATUS_FARBE } from './render2d.js?v=20261104-0900';
-import { wallTilePlan, originDims, tileSummary } from './tilecalc.js?v=20261104-0900';
-import { TILE_TEXTUREN } from './textures.js?v=20261104-0900';
-import { icon } from './icons.js?v=20261104-0900';
-import { FREI } from './frei.js?v=20261104-0900';
+import * as G from './geom.js?v=20261104-1200';
+import * as W from './walls.js?v=20261104-1200';
+import * as T from './tiles.js?v=20261104-1200';
+import { CanvasPainter } from './painter.js?v=20261104-1200';
+import { drawPlan, drawTileResult, floorTiles, zoneTiles, drawDim, drawSymbol, symbolFootprint, PEN, STATUS_FARBE } from './render2d.js?v=20261104-1200';
+import { wallTilePlan, originDims, tileSummary } from './tilecalc.js?v=20261104-1200';
+import { TILE_TEXTUREN } from './textures.js?v=20261104-1200';
+import { icon } from './icons.js?v=20261104-1200';
+import { FREI } from './frei.js?v=20261104-1200';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const m2 = (v) => v.toFixed(2).replace('.', ',') + ' m²';
@@ -233,7 +233,7 @@ class TilePlanView {
   }
   cfgFloor() { const r = this.room; if (!r) return null; return r.type === 'tilezone' ? r.tiles : r.tiles && r.tiles.boden; }
 
-  async studio(ziel) { const M = await import('./fliesenstudio.js?v=20261104-0900'); M.openStudio(this.app, { roomId: this.roomId, ziel: ziel || (this.edit === 'wand' ? 'wand' : 'boden'), onClose: () => this.refresh() }); }
+  async studio(ziel) { const M = await import('./fliesenstudio.js?v=20261104-1200'); M.openStudio(this.app, { roomId: this.roomId, ziel: ziel || (this.edit === 'wand' ? 'wand' : 'boden'), onClose: () => this.refresh() }); }
   /* ───── Seitenleiste: Einstellungen ───── */
   renderSide(body) {
     const r = this.room; const doc = this.app.doc; if (!r) { body.append(h('div', { class: 'muted' }, 'Raum wählen')); return; }
@@ -279,7 +279,7 @@ class TilePlanView {
     const file = h('input', { type: 'file', accept: 'image/*', style: 'display:none' });
     file.onchange = async () => { const f = file.files[0]; if (!f) return; const url = await shrinkImage(f, 384); ch('Fliesenfoto', () => { cfg.bildData = url; cfg.textur = 'bild'; }); };
     body.append(h('div', { class: 'sec' }, h('h4', {}, 'Optik (Kundenansicht & 3D)'), row('Oberfläche', sel('textur', [...Object.entries(TILE_TEXTUREN), ['bild', 'Foto der Fliese']])), row('Farbe', inp('farbe', 'color')), row('Zweitfarbe / Äderung', inp('farbe2', 'color')), row('Fugenfarbe', inp('fugeFarbe', 'color')),
-      h('div', { class: 'btns' }, h('button', { class: 'btn sm', onclick: () => file.click() }, 'Foto hochladen'), FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261104-0900'); M.searchTile(this.app, cfg, () => { this.compute(); this.draw(); this.app.renderSide(); }); }, html: icon('ki') + 'Fliese im Internet suchen (KI)' }), file),
+      h('div', { class: 'btns' }, h('button', { class: 'btn sm', onclick: () => file.click() }, 'Foto hochladen'), FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261104-1200'); M.searchTile(this.app, cfg, () => { this.compute(); this.draw(); this.app.renderSide(); }); }, html: icon('ki') + 'Fliese im Internet suchen (KI)' }), file),
       cfg.bildData ? h('img', { src: cfg.bildData, style: 'width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:8px' }) : null,
       cfg.quelle ? h('div', { class: 'muted', style: 'margin-top:4px' }, 'Quelle: ', h('a', { href: cfg.quelle, target: '_blank' }, cfg.quelle.slice(0, 60))) : null));
     // Mengen
@@ -321,7 +321,7 @@ class TilePlanView {
     app.modal('Materialliste Fliesen (alle Räume)', h('div', {}, t, h('div', { class: 'muted', style: 'margin-top:8px' }, 'Bestellmengen inkl. Reserve und geschätzter Reststückverwertung. Kleber/Silikon/Profile stehen je Raum im Fliesenplan.')), [h('button', { class: 'btn', onclick: csv }, 'Als CSV (Excel)'), h('button', { class: 'btn pri', onclick: () => this.printPlan(true) }, 'Als PDF')]);
   }
   async printPlan(nurMaterial = false) {
-    const M = await import('./print.js?v=20261104-0900'); M.printTilePlan(this.app, this, { nurMaterial });
+    const M = await import('./print.js?v=20261104-1200'); M.printTilePlan(this.app, this, { nurMaterial });
   }
 }
 

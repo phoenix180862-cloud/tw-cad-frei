@@ -627,3 +627,14 @@ body.no2d .masz-leiste, #app.no2d .masz-leiste { display: none; }
 .dynin.grob.links::before { left: calc(100% + 34px); border-left: 10px solid var(--acc); transform: translate(-100%, -50%) rotate(19.4deg); transform-origin: 100% 50%; }
 .dynin.grob.rechts::before { right: calc(100% + 34px); border-right: 10px solid var(--acc); transform: translate(100%, -50%) rotate(-19.4deg); transform-origin: 0 50%; }
 .ml-hand { min-width: 44px; }
+
+/* Geteilte Löschtaste (04.11.2026): links „Löschen“ wie bisher, rechts „Letzter Schritt“ */
+.del-gruppe { display: inline-flex; align-items: stretch; margin-right: 8px; border-radius: 8px; box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+.del-gruppe .del-btn { margin: 0; border-radius: 8px 0 0 8px; box-shadow: none; }
+.schritt-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 0 8px 8px 0; border: 1px solid #b91c1c; border-left: 1px solid rgba(255,255,255,.45); background: #b91c1c; color: #fff; font: 700 13px var(--font); cursor: pointer; white-space: nowrap; touch-action: manipulation; }
+.schritt-btn svg { width: 16px; height: 16px; }
+.schritt-btn:hover { background: #dc2626; }
+.schritt-btn:active { background: #7f1d1d; }
+.stage-knoepfe .del-gruppe { margin: 0; }
+@media (max-width: 1100px) { #topActions .schritt-btn span { display: none; } #topActions .schritt-btn { padding: 0 10px; } }
+.schritt-btn:focus:not(:focus-visible), .del-btn:focus:not(:focus-visible) { outline: none; }

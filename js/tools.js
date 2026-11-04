@@ -1,16 +1,16 @@
 // TW-CAD – Werkzeuge
-import * as G from './geom.js?v=20261104-0900';
-import * as AB from './aufbau.js?v=20261104-0900';
-import * as W from './walls.js?v=20261104-0900';
-import * as E from './edit.js?v=20261104-0900';
-import { uid } from './model.js?v=20261104-0900';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261104-0900';
-import { defaultTileCfg } from './tiles.js?v=20261104-0900';
-import * as K from './katalog.js?v=20261104-0900';
-import * as B from './bauteile.js?v=20261104-0900';
-import * as T from './treppe.js?v=20261104-0900';
-import { t } from './i18n.js?v=20261104-0900';
-import { laengenSchritt } from './snap.js?v=20261104-0900';
+import * as G from './geom.js?v=20261104-1200';
+import * as AB from './aufbau.js?v=20261104-1200';
+import * as W from './walls.js?v=20261104-1200';
+import * as E from './edit.js?v=20261104-1200';
+import { uid } from './model.js?v=20261104-1200';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261104-1200';
+import { defaultTileCfg } from './tiles.js?v=20261104-1200';
+import * as K from './katalog.js?v=20261104-1200';
+import * as B from './bauteile.js?v=20261104-1200';
+import * as T from './treppe.js?v=20261104-1200';
+import { t } from './i18n.js?v=20261104-1200';
+import { laengenSchritt } from './snap.js?v=20261104-1200';
 
 const SEL = '#2563eb';
 const HART = new Set(['end', 'ecke', 'schnitt', 'mitte', 'zentrum', 'lot', 'spur', 'abstand']);
@@ -204,8 +204,12 @@ export class WallTool extends Tool {
   zurueck() {
     if (this.mode !== 'kette' || !this.pts.length) return false;
     if (this.pts.length === 1) { this.reset(); this.app.massLeiste && this.app.massLeiste(); return true; }
+    // Verlauf zurückspulen (Längenkorrekturen + das Anlegen der letzten Wand) – so bleibt Strg+Z/„Letzter Schritt“ danach stimmig
+    const U = this.doc.undoStack || []; const top = () => U.length ? U[U.length - 1].label : null;
+    let k = 0; while (top() === 'Wandlänge' && k++ < 20) this.doc.undo();
     const id = this.chain.pop(); this.pts.pop();
-    this.doc.change('Wand zurück', () => { if (id) this.doc.remove([id]); this.rebuildChain(); });
+    if (top() === 'Wand') this.doc.undo();
+    else { this.doc.change('Wand zurück', () => { if (id) this.doc.remove([id]); this.rebuildChain(); }); U.pop(); }
     this.app.redraw(); this.app.massLeiste && this.app.massLeiste(); return true;
   }
   /** Wandzug zum Startpunkt schließen */

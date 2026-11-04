@@ -1,24 +1,24 @@
 // TW-CAD – Hauptprogramm
-import * as G from './geom.js?v=20261104-0900';
-import * as W from './walls.js?v=20261104-0900';
-import * as E from './edit.js?v=20261104-0900';
-import { Doc, newProject, saveProject, loadProject, listProjects, deleteProject, migrate, uid } from './model.js?v=20261104-0900';
-import { View2D } from './view2d.js?v=20261104-0900';
-import { snap, SNAP_LABEL } from './snap.js?v=20261104-0900';
-import { makeTool } from './tools.js?v=20261104-0900';
-import { icon } from './icons.js?v=20261104-0900';
-import { symbolFootprint, columnPoly, dimGeometry, drawDim, drawSymbol, floorTiles, SYMBOLE } from './render2d.js?v=20261104-0900';
-import { CanvasPainter } from './painter.js?v=20261104-0900';
-import { renderProps, renderStoreys, renderLayers, renderProject } from './props.js?v=20261104-0900';
-import { demoProject } from './demo.js?v=20261104-0900';
-import * as Help from './help.js?v=20261104-0900';
-import { makeTool2 } from './tools2.js?v=20261104-0900';
-import { hydrateUnderlays } from './pdfimport.js?v=20261104-0900';
-import * as AB from './abstand.js?v=20261104-0900';
-import { treppe } from './treppe.js?v=20261104-0900';
-import * as F from './frei.js?v=20261104-0900';
-import * as I18N from './i18n.js?v=20261104-0900';
-import * as ML from './massleiste.js?v=20261104-0900';
+import * as G from './geom.js?v=20261104-1200';
+import * as W from './walls.js?v=20261104-1200';
+import * as E from './edit.js?v=20261104-1200';
+import { Doc, newProject, saveProject, loadProject, listProjects, deleteProject, migrate, uid } from './model.js?v=20261104-1200';
+import { View2D } from './view2d.js?v=20261104-1200';
+import { snap, SNAP_LABEL } from './snap.js?v=20261104-1200';
+import { makeTool } from './tools.js?v=20261104-1200';
+import { icon } from './icons.js?v=20261104-1200';
+import { symbolFootprint, columnPoly, dimGeometry, drawDim, drawSymbol, floorTiles, SYMBOLE } from './render2d.js?v=20261104-1200';
+import { CanvasPainter } from './painter.js?v=20261104-1200';
+import { renderProps, renderStoreys, renderLayers, renderProject } from './props.js?v=20261104-1200';
+import { demoProject } from './demo.js?v=20261104-1200';
+import * as Help from './help.js?v=20261104-1200';
+import { makeTool2 } from './tools2.js?v=20261104-1200';
+import { hydrateUnderlays } from './pdfimport.js?v=20261104-1200';
+import * as AB from './abstand.js?v=20261104-1200';
+import { treppe } from './treppe.js?v=20261104-1200';
+import * as F from './frei.js?v=20261104-1200';
+import * as I18N from './i18n.js?v=20261104-1200';
+import * as ML from './massleiste.js?v=20261104-1200';
 const { t } = I18N;
 
 // Zwei-Bildschirm-Modus: Bedienelemente können im Werkzeug-Fenster (zweiter Bildschirm) liegen
@@ -64,7 +64,7 @@ class App {
     this.view = new View2D(this, $('#cv'));
     this.buildTop(); this.buildToggles(); this.bindKeys(); this.bindCmd();
     this.setMode('grundriss'); this.setTool('select');
-    if (!F.FREI) import('./driveprojekt.js?v=20261104-0900').then(DP => DP.autoSichern(this)).catch(() => { });
+    if (!F.FREI) import('./driveprojekt.js?v=20261104-1200').then(DP => DP.autoSichern(this)).catch(() => { });
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); this._installEvt = e; if (F.FREI) this.buildTop(); });
     window.addEventListener('appinstalled', () => { this._installEvt = null; if (F.FREI) { this.buildTop(); this.toast('TW-CAD ist installiert – du findest es jetzt im Startmenü / auf dem Home-Bildschirm.'); } });
     $('#cmd').placeholder = this.cmdPlatzhalter();
@@ -73,7 +73,7 @@ class App {
     Help.init(this);
     window.addEventListener('beforeunload', () => { if (this.doc.dirty) this.saveNow(); try { this.wz && this.wz.close(); } catch (e) { } });
     const sk = document.getElementById('stageKnoepfe');
-    if (sk) sk.append(h('button', { class: 'neu-btn', title: 'Neuer Plan – leeres Blatt', onclick: () => this.neuerPlan(), html: icon('plus') + '<span>Neu</span>' }), h('button', { class: 'del-btn', title: 'Löschen (Entf)', onclick: () => this.loeschen(), html: icon('trash') + '<span>Löschen</span>' }), h('button', { class: 'stage-k', title: 'Rückgängig (Strg+Z)', onclick: () => this.undo(), html: icon('undo') }), h('button', { class: 'stage-k', title: 'Wiederholen (Strg+Y)', onclick: () => this.redo(), html: icon('redo') }));
+    if (sk) sk.append(h('button', { class: 'neu-btn', title: 'Neuer Plan – leeres Blatt', onclick: () => this.neuerPlan(), html: icon('plus') + '<span>Neu</span>' }), h('div', { class: 'del-gruppe' }, h('button', { class: 'del-btn', title: 'Löschen (Entf)', onclick: () => this.loeschen(), html: icon('trash') + '<span>Löschen</span>' }), h('button', { class: 'schritt-btn', title: 'Letzten Schritt löschen', onclick: () => this.letzterSchritt(), html: icon('undo') + '<span>Letzter Schritt</span>' })), h('button', { class: 'stage-k', title: 'Rückgängig (Strg+Z)', onclick: () => this.undo(), html: icon('undo') }), h('button', { class: 'stage-k', title: 'Wiederholen (Strg+Y)', onclick: () => this.redo(), html: icon('redo') }));
     const zb = document.getElementById('zweiAus'), vb = document.getElementById('vollbildBtn');
     if (zb) zb.onclick = () => this.toggleZweiBildschirm(); if (vb) vb.onclick = () => this.vollbild();
     if (F.FREI && !F.stufeGewaehlt()) setTimeout(() => this.startDialog(), 300);
@@ -115,7 +115,8 @@ class App {
     if (F.FREI && this.installStatus() !== 'installiert') acts.append(h('button', { class: 'ib install-btn', title: 'TW-CAD als App auf diesem Gerät installieren (Startmenü/Desktop bzw. Home-Bildschirm, funktioniert dann auch offline)', onclick: () => this.installieren(), html: icon('download') + '<span>App installieren</span>' }));
     acts.append(...[
       h('button', { class: 'neu-btn', title: 'Neuer Plan – leeres Blatt (der jetzige Plan wird vorher gespeichert oder verworfen, du wirst gefragt)', onclick: () => this.neuerPlan(), html: icon('plus') + '<span>Neuer Plan</span>' }),
-      h('button', { class: 'del-btn', title: 'Löschen (Entf) – mit Auswahl: Auswahl löschen · ohne Auswahl: Lösch-Modus, dann Elemente anklicken · Strg+Z holt alles zurück', onclick: () => this.loeschen(), html: icon('trash') + '<span>Löschen</span>' }),
+      h('div', { class: 'del-gruppe' }, h('button', { class: 'del-btn', title: 'Löschen (Entf) – mit Auswahl: Auswahl löschen · ohne Auswahl: Lösch-Modus, dann Elemente anklicken · Strg+Z holt alles zurück', onclick: () => this.loeschen(), html: icon('trash') + '<span>Löschen</span>' }),
+        h('button', { class: 'schritt-btn', title: 'Letzten Schritt löschen – nimmt das zuletzt Gezeichnete weg (Wand, Maß, Fenster …); mehrmals tippen geht Schritt für Schritt zurück', onclick: () => this.letzterSchritt(), html: icon('undo') + '<span>Letzter Schritt</span>' })),
       b('undo', 'Rückgängig (Strg+Z)', () => this.undo()), b('redo', 'Wiederholen (Strg+Y)', () => this.redo()),
       b('folder', 'Projekte öffnen / neu', () => this.projectsDialog()), b('save', 'Speichern (Strg+S)', () => this.saveNow(true)),
       F.profi(b('importpdf', 'Plan (PDF/Bild) importieren und Grundriss aus Maßen aufbauen', () => this.importDialog())),
@@ -562,8 +563,8 @@ class App {
       if (e.key === ' ' && !inField) this.spaceDown = true;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !inField) { e.preventDefault(); this.undo(); return; }
       if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z')) && !inField) { e.preventDefault(); this.redo(); return; }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !F.FREI) { e.preventDefault(); import('./ki-plus.js?v=20261104-0900').then(K => K.befehlsLeiste(this)); return; }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's' && !F.FREI) { e.preventDefault(); import('./driveprojekt.js?v=20261104-0900').then(DP => DP.speichern(this)); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !F.FREI) { e.preventDefault(); import('./ki-plus.js?v=20261104-1200').then(K => K.befehlsLeiste(this)); return; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's' && !F.FREI) { e.preventDefault(); import('./driveprojekt.js?v=20261104-1200').then(DP => DP.speichern(this)); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); this.saveNow(true); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && !inField) { this.clip = [...this.selection]; this.toast(`${this.clip.length} Element(e) kopiert`); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && !inField && this.clip) { const n = this.doc.change('Einfügen', () => E.copyElements(this.doc, this.clip, E.moveFn({ x: 500, y: -500 }))); this.select(n.map(x => x.id)); return; }
@@ -601,6 +602,19 @@ class App {
     this.refreshHint(); this.redraw(); c.blur();
   }
   /* ───── Löschen (zentraler Knopf) ───── */
+  /** Letzten Schritt löschen: laufenden Wandzug um eine Wand kürzen bzw. angefangene Aktion abbrechen, sonst den letzten Arbeitsschritt zurücknehmen */
+  letzterSchritt() {
+    const t = this.tool;
+    if (t && t.pts && t.pts.length) {
+      if (t.zurueck && t.mode === 'kette') { t.zurueck(); this.toast(t.pts.length ? 'Letzte Wand gelöscht' : 'Angefangene Wand verworfen'); }
+      else { t.cancel ? t.cancel() : (t.pts = []); this.toast('Angefangener Schritt verworfen'); }
+      this.dyn(null); this.refreshHint(); this.redraw(); return;
+    }
+    const l = this.doc.undo();
+    if (!l) { this.toast('Kein Schritt mehr zum Löschen'); return; }
+    if (this.selection && this.selection.size) { this.selection.clear(); this.selChanged && this.selChanged(); }
+    this.autoRooms && this.autoRooms(); this.redraw(); this.toast(`Zurückgenommen: ${l} · ↷ holt es wieder`);
+  }
   loeschen() {
     if (this.selection.size) { const n = this.selection.size; this.deleteSelection(); this.toast(`${n === 1 ? '1 Element' : n + ' Elemente'} gelöscht – Strg+Z holt es zurück`); this.updateDelBtn(); return; }
     if (this.mode !== 'grundriss' && this.mode !== 'lageplan') { this.toast('Löschen: im Grundriss oder Lageplan das Element anklicken und dann Löschen drücken.', true); return; }
@@ -714,7 +728,7 @@ class App {
   /** Fliesen-Studio (großes Fliesen-Fenster) – für Raum/Fliesenfläche (sonst ausgewählter oder erster Raum) */
   async openStudio(roomId, ziel) {
     if (!roomId) { const sel = [...this.selection].map(id => this.doc.byId(id)).find(e => e && (e.type === 'room' || e.type === 'tilezone')); roomId = sel ? sel.id : (this.mode === 'fliesen' && this.modeView ? this.modeView.roomId : null); }
-    const M = await import('./fliesenstudio.js?v=20261104-0900');
+    const M = await import('./fliesenstudio.js?v=20261104-1200');
     return M.openStudio(this, { roomId, ziel, onClose: () => { if (this.mode === 'fliesen' && this.modeView && this.modeView.refresh) this.modeView.refresh(); this.redraw(); this.renderSide(); } });
   }
   /** Neuer Plan: leeres Blatt – vorher fragen, ob der jetzige Plan behalten werden soll */
@@ -723,7 +737,7 @@ class App {
     const starten = async (behalten) => {
       close && close();
       const altJson = JSON.stringify(alt.p); const altId = alt.p.id; const altName = alt.p.name;
-      if (behalten) { alt.p.name = name.value.trim() || altName; await this.saveNow(); if (!F.FREI && alt.p.meta && alt.p.meta.drive && alt.p.meta.drive.id) import('./driveprojekt.js?v=20261104-0900').then(DP => DP.speichern(this, { still: true })).catch(() => { }); }
+      if (behalten) { alt.p.name = name.value.trim() || altName; await this.saveNow(); if (!F.FREI && alt.p.meta && alt.p.meta.drive && alt.p.meta.drive.id) import('./driveprojekt.js?v=20261104-1200').then(DP => DP.speichern(this, { still: true })).catch(() => { }); }
       else { try { await deleteProject(altId); } catch (e) { } }
       const d = new Date(); const p = newProject(t('Plan') + ' ' + d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
       p.settings = Object.assign(p.settings, JSON.parse(JSON.stringify(alt.p.settings || {}))); p.meta.planer = (alt.p.meta && alt.p.meta.planer) || p.meta.planer;
@@ -751,8 +765,8 @@ class App {
       h('button', { class: 'btn', onclick: async () => { await this.saveNow(); this.setDoc(new Doc(demoProject())); this.refreshTitle(); this.setMode('grundriss'); close(); } }, 'Beispielprojekt laden'),
       h('button', { class: 'btn', onclick: () => { close(); this.openFile(); } }, 'Datei öffnen (.twcad)'),
       h('button', { class: 'btn', onclick: () => this.downloadProject() }, 'Aktuelles Projekt als Datei sichern'),
-      h('button', { class: 'btn', onclick: async () => { close(); const X = await import('./dxfimport.js?v=20261104-0900'); X.openDxfImport(this); } }, 'DXF-Zeichnung importieren')));
-    if (!F.FREI) { const DP = await import('./driveprojekt.js?v=20261104-0900'); body.append(DP.abschnitt(this, () => close())); }
+      h('button', { class: 'btn', onclick: async () => { close(); const X = await import('./dxfimport.js?v=20261104-1200'); X.openDxfImport(this); } }, 'DXF-Zeichnung importieren')));
+    if (!F.FREI) { const DP = await import('./driveprojekt.js?v=20261104-1200'); body.append(DP.abschnitt(this, () => close())); }
     else body.append(h('div', { class: 'note' }, h('b', {}, 'Wichtig: '), 'Deine Projekte liegen nur in diesem Browser auf diesem Gerät. Sichere sie regelmäßig mit „Aktuelles Projekt als Datei sichern“ (.twcad-Datei, z. B. auf USB-Stick oder in deine Cloud) – mit „Datei öffnen“ holst du sie zurück, auch auf einem anderen Gerät.'));
     if (F.FREI) body.append(h('div', { class: 'sec' }, h('h4', {}, 'TW-CAD als App'), this.installStatus() === 'installiert' ? h('div', { class: 'muted' }, 'Läuft als installierte App – funktioniert auch ohne Internet (nur die Hilfe-Videos brauchen Internet).') : h('button', { class: 'btn', onclick: () => { close(); this.installieren(); } }, '⬇ Als App installieren (Startmenü/Desktop bzw. Home-Bildschirm, offline nutzbar)')));
     else body.append(h('div', { class: 'sec' }, h('h4', {}, 'TW-CAD als App'), matchMedia('(display-mode: standalone)').matches ? h('div', { class: 'muted' }, 'Läuft als installierte App – funktioniert auch ohne Internet (KI, Drive und Hilfe-Videos brauchen Internet).') :
@@ -766,9 +780,9 @@ class App {
     const close = this.modal('Projekte', body);
   }
   async importDialog() {
-    if (F.FREI) { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261104-0900'); X.openDxfImport(this, f); } else { const M = await import('./pdfimport.js?v=20261104-0900'); M.openImport(this, { file: f }); } return; }
-    const M = await import('./pdfimport.js?v=20261104-0900'); const P = await import('./planwahl.js?v=20261104-0900');
-    P.openPlanwahl(this, { titel: 'Plan aus der Baustelle', onWahl: (f, page, d, b) => { this.linkBaustelle(b); M.openImport(this, { file: f, page }); }, onEigeneDatei: async () => { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf,.dwg'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261104-0900'); X.openDxfImport(this, f); } else M.openImport(this, { file: f }); } });
+    if (F.FREI) { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261104-1200'); X.openDxfImport(this, f); } else { const M = await import('./pdfimport.js?v=20261104-1200'); M.openImport(this, { file: f }); } return; }
+    const M = await import('./pdfimport.js?v=20261104-1200'); const P = await import('./planwahl.js?v=20261104-1200');
+    P.openPlanwahl(this, { titel: 'Plan aus der Baustelle', onWahl: (f, page, d, b) => { this.linkBaustelle(b); M.openImport(this, { file: f, page }); }, onEigeneDatei: async () => { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf,.dwg'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261104-1200'); X.openDxfImport(this, f); } else M.openImport(this, { file: f }); } });
   }
   /** Offline-Fähigkeit: Service Worker registrieren und alle Programmdateien vorab speichern */
   async offlineEinrichten() {
@@ -879,7 +893,7 @@ class App {
     this.doc.change('Baustelle zugeordnet', () => { m.baustelle = { id: b.id, name: b.name }; if (!m.bauvorhaben) m.bauvorhaben = b.name; });
     this.toast('Projekt der Baustelle „' + b.name + '“ zugeordnet'); this.renderSide();
   }
-  async aiDialog() { if (F.FREI) return; const M = await import('./ai.js?v=20261104-0900'); M.openAI(this); }
+  async aiDialog() { if (F.FREI) return; const M = await import('./ai.js?v=20261104-1200'); M.openAI(this); }
   settingsDialog() {
     const S = this.doc.p.settings; const body = h('div', { class: 'grid2' });
     const f = (label, key, type = 'number') => { const i = h('input', { type, value: S[key] ?? '' }); i.onchange = () => { S[key] = type === 'number' ? +i.value : i.value; this.redraw(); }; return h('div', { class: 'row' }, h('label', {}, label), i); };

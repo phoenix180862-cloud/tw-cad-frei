@@ -1,10 +1,10 @@
 // TW-CAD – Plan vom Kunden übernehmen: PDF/Bild laden, Maßstab bestimmen, Wände aus Maßen aufbauen
-import * as G from './geom.js?v=20261104-0900';
-import * as W from './walls.js?v=20261104-0900';
-import * as V from './pdfvec.js?v=20261104-0900';
-import { uid } from './model.js?v=20261104-0900';
-import { icon } from './icons.js?v=20261104-0900';
-import { FREI } from './frei.js?v=20261104-0900';
+import * as G from './geom.js?v=20261104-1200';
+import * as W from './walls.js?v=20261104-1200';
+import * as V from './pdfvec.js?v=20261104-1200';
+import { uid } from './model.js?v=20261104-1200';
+import { icon } from './icons.js?v=20261104-1200';
+import { FREI } from './frei.js?v=20261104-1200';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const MMPT = 25.4 / 72;
@@ -153,7 +153,7 @@ export async function openImport(app, preset = {}) {
   fileBtn.onclick = async () => { const f = await app.pickFile('application/pdf,image/*'); if (f) loadFile(f); };
   baustBtn.onclick = async () => {
     if (FREI) return fileBtn.onclick();
-    const M = await import('./planwahl.js?v=20261104-0900');
+    const M = await import('./planwahl.js?v=20261104-1200');
     M.openPlanwahl(app, { titel: 'Plan aus der Baustelle', onWahl: (f, page, datei, b) => { app.linkBaustelle && app.linkBaustelle(b); loadFile(f, page); }, onEigeneDatei: () => fileBtn.onclick() });
   };
   pageSel.onchange = async () => { st.pageNo = +pageSel.value; await loadPage(); };
@@ -289,7 +289,7 @@ export async function openImport(app, preset = {}) {
     app.toast(stuecke.length ? (nR ? `${nR} Raum/Räume mit ${stuecke.length} Wänden aus den Planmaßen nachgebaut – weitere Räume aus demselben Plan passen genau daneben.` : `${stuecke.length} Wände aus den Planmaßen übernommen – bitte stichprobenartig nachmessen (Messen-Werkzeug).`) : 'Plan als Unterlage hinterlegt – jetzt nachzeichnen (Fang auf Planlinien aktiv).');
   };
   const close = app.modal('Plan übernehmen – ganz oder einzelne Räume', body, [
-    FREI ? null : h('button', { class: 'btn', onclick: async () => { if (!st.img) return app.toast('Erst eine Datei wählen', true); const M = await import('./ai.js?v=20261104-0900'); M.readPlanAI(app, st); }, html: icon('ki') + 'KI: Plan lesen (Räume & Maße)' }),
+    FREI ? null : h('button', { class: 'btn', onclick: async () => { if (!st.img) return app.toast('Erst eine Datei wählen', true); const M = await import('./ai.js?v=20261104-1200'); M.readPlanAI(app, st); }, html: icon('ki') + 'KI: Plan lesen (Räume & Maße)' }),
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'), h('button', { class: 'btn pri', onclick: apply }, 'Übernehmen')]);
   const box = document.getElementById('modalBox'); box.classList.add('wide');
   const closeOrig = close; const mo = document.getElementById('modal'); const obs = new MutationObserver(() => { if (mo.classList.contains('hidden')) { box.classList.remove('wide'); obs.disconnect(); } }); obs.observe(mo, { attributes: true, attributeFilter: ['class'] }); void closeOrig;

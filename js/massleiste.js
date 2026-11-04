@@ -5,8 +5,8 @@
 //  • Längen-Schritt beim Ziehen (Auto nach Zoom / 1 / 5 / 10 / 50 cm) und Winkelfang (frei / 90° / 45° / 15°)
 //  • Zurück, Schließen, Fertig – große Knöpfe für Tablet und Handy
 //  • eigener Ziffernblock (keine Bildschirmtastatur, die die Zeichnung zuschiebt)
-import * as G from './geom.js?v=20261104-0900';
-import { laengenSchritt } from './snap.js?v=20261104-0900';
+import * as G from './geom.js?v=20261104-1200';
+import { laengenSchritt } from './snap.js?v=20261104-1200';
 
 const $ = (s) => document.querySelector(s);
 function h(tag, attrs = {}, ...kids) {

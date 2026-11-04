@@ -1,5 +1,5 @@
 // TW-CAD – Mehrschichtige Wände (Wandaufbauten): Schichten-Katalog, Darstellung im Grundriss/Schnitt, Kennwerte
-import * as G from './geom.js?v=20261104-0900';
+import * as G from './geom.js?v=20261104-1200';
 
 /** Schicht-Materialien: Füllfarbe, Schraffur, Wärmeleitfähigkeit λ (W/mK, Richtwert) */
 export const SCHICHT_MAT = {

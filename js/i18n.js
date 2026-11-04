@@ -3,7 +3,7 @@
 // ordnen jedem deutschen Text die Übersetzung zu (Platzhalter {0}, {1} … für Zahlen/Namen).
 // Übersetzt wird beim Anzeigen: Oberfläche (Text, title, placeholder), Zeichenfläche (Canvas-Text),
 // PDF-Ausgabe und Meldungsfenster. Projektdaten (Raumnamen usw.) bleiben, wie der Nutzer sie eingibt.
-import { FREI } from './frei.js?v=20261104-0900';
+import { FREI } from './frei.js?v=20261104-1200';
 
 const WIN = typeof window !== 'undefined' ? window : null;
 export const SPRACHEN = [['de', 'Deutsch'], ['en', 'English'], ['cs', 'Čeština'], ['sk', 'Slovenčina'], ['uk', 'Українська'], ['pl', 'Polski']];
