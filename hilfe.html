@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="frei-config.js?v=20261103-1900"></script>
+<script src="frei-config.js?v=20261104-0900"></script>
 <title>TW-CAD Hilfe</title>
 <style>
   :root { --bg:#12161b; --bg2:#181d24; --bg3:#20262e; --line:#313944; --tx:#e7eaee; --tx2:#a9b1bc; --gelb:#facc15; }
@@ -32,8 +32,8 @@
 <div class="ton" id="ton"><span class="lbl">🔊 Lautstärke</span><button class="btn" id="leiser" title="leiser (Taste −)">−</button><input type="range" id="regler" min="0" max="100" step="5" title="Lautstärke – ziehen oder − / + drücken" aria-label="Lautstärke"><button class="btn" id="lauter" title="lauter (Taste +)">+</button><span class="wert" id="wert"></span><button class="btn" id="stumm" title="Ton aus/an (Taste M)">🔊</button><button class="btn" id="nochmal" title="Video von vorn">↻ von vorn</button></div>
 <main><h2 id="titel"></h2><ol id="schritte"></ol></main>
 <script type="module">
-import { HILFE } from './js/help-data.js?v=20261103-1900';
-import * as I18N from './js/i18n.js?v=20261103-1900';
+import { HILFE } from './js/help-data.js?v=20261104-0900';
+import * as I18N from './js/i18n.js?v=20261104-0900';
 const SPR = await I18N.laden(); I18N.beobachten(document);
 const FREI_A = window.TW_FREI === true;
 // Videos: eigene Aufnahme in der gewählten Sprache (videos-frei/<sprache>/), sonst die deutschen Videos

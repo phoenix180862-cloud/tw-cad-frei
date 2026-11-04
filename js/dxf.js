@@ -1,7 +1,7 @@
 // TW-CAD – DXF-Export (AutoCAD R12, Einheit mm) über dieselben Zeichenbefehle wie Bildschirm/PDF
-import { drawPlan } from './render2d.js?v=20261103-1900';
-import { drawSite } from './site.js?v=20261103-1900';
-import { hexToRgb } from './painter.js?v=20261103-1900';
+import { drawPlan } from './render2d.js?v=20261104-0900';
+import { drawSite } from './site.js?v=20261104-0900';
+import { hexToRgb } from './painter.js?v=20261104-0900';
 
 function aci(hex) { // grobe Farbzuordnung auf AutoCAD-Farbindex
   const [r, g, b] = hexToRgb(hex || '#000'); if (r + g + b < 120) return 7; if (r > 180 && g < 90 && b < 90) return 1; if (r > 180 && g > 180 && b < 90) return 2; if (g > 140 && r < 120 && b < 120) return 3; if (b > 150 && r < 120) return 5; if (r > 150 && b > 150 && g < 120) return 6; if (r > 200 && g > 200 && b > 200) return 9; return 8;

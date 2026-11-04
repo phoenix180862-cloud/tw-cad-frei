@@ -1,6 +1,6 @@
 // TW-CAD – Sonnenstand nach Datum, Uhrzeit und Ort (vereinfachter NOAA-Algorithmus, Genauigkeit ca. 0,5°)
-import { FREI } from './frei.js?v=20261103-1900';
-import { HEIMAT, ORTE_REGION } from './firma.js?v=20261103-1900';
+import { FREI } from './frei.js?v=20261104-0900';
+import { HEIMAT, ORTE_REGION } from './firma.js?v=20261104-0900';
 // öffentliche Fassung: neutraler Standort in der Mitte Deutschlands (eigener Ort jederzeit wählbar)
 export const ORT_STANDARD = FREI || !HEIMAT.name ? { name: 'Kassel (Mitte Deutschlands)', lat: 51.316, lon: 9.498 } : { name: HEIMAT.name, lat: HEIMAT.lat, lon: HEIMAT.lon };
 const ORTE_TW = [...ORTE_REGION,

@@ -1,6 +1,6 @@
 // TW-CAD – Materialauswahl (Fassade, Fenster, Haustür, Dach) mit Vorschau
-import { MATERIALIEN, matById } from './material-db.js?v=20261103-1900';
-import { surfaceTexture } from './textures.js?v=20261103-1900';
+import { MATERIALIEN, matById } from './material-db.js?v=20261104-0900';
+import { surfaceTexture } from './textures.js?v=20261104-0900';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 

@@ -5,8 +5,8 @@
 //  • Längen-Schritt beim Ziehen (Auto nach Zoom / 1 / 5 / 10 / 50 cm) und Winkelfang (frei / 90° / 45° / 15°)
 //  • Zurück, Schließen, Fertig – große Knöpfe für Tablet und Handy
 //  • eigener Ziffernblock (keine Bildschirmtastatur, die die Zeichnung zuschiebt)
-import * as G from './geom.js?v=20261103-1900';
-import { laengenSchritt } from './snap.js?v=20261103-1900';
+import * as G from './geom.js?v=20261104-0900';
+import { laengenSchritt } from './snap.js?v=20261104-0900';
 
 const $ = (s) => document.querySelector(s);
 function h(tag, attrs = {}, ...kids) {
@@ -70,6 +70,9 @@ export function render(app) {
     for (const [v, l] of WINKEL_WAHL) segW.append(h('button', { class: v === ww ? 'on' : '', title: v === 'frei' ? 'Winkel frei (rastet bei 15° leicht ein)' : `Wände nur in ${l}-Schritten`, onclick: () => { winkelSetzen(app, v); render(app); } }, l));
     el.append(gruppe('Winkel', segW));
   }
+  // Schreibhand (Lage des Maßfensters beim Stift)
+  const hand = lsGet('twcad_hand', 'rechts');
+  el.append(h('button', { class: 'ml-btn klein ml-hand', title: hand === 'rechts' ? 'Rechtshänder: Maßfenster beim Stift links der Spitze – tippen für Linkshänder' : 'Linkshänder: Maßfenster beim Stift rechts der Spitze – tippen für Rechtshänder', onclick: () => { lsSet('twcad_hand', hand === 'rechts' ? 'links' : 'rechts'); render(app); } }, hand === 'rechts' ? '✍ R' : '✍ L'));
   // Aktionen
   if (t.mode === 'kette' && t.pts.length) {
     const ak = h('div', { class: 'ml-g ml-ak' });
