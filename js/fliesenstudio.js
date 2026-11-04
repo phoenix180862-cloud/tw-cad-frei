@@ -2,16 +2,16 @@
 //   links  „① Wohin?“     Boden, Randfries, alle Wände, jede Wand einzeln, Wand oben (2. Fliese), Bordüre/Fries, Sockel
 //   Mitte  Vorschau (Verlegeplan/Kundenansicht, Startpunkt ziehen) + „② Welche Fliese?“ (Projekt · LV · Katalog · Eigene)
 //   rechts „③ Wie verlegen?“  Verband, Richtung, Startpunkt, Fugen, Höhen, Kanten/Kleber, Mengen & Kosten, Übertragen
-import * as G from './geom.js?v=20261104-1200';
-import * as T from './tiles.js?v=20261104-1200';
-import * as K from './fliesenkatalog.js?v=20261104-1200';
-import { wallSurfaces, wallTilePlan, tileSummary, raumBauteile, bauteilSeiten, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261104-1200';
-import { floorTiles, zoneTiles } from './render2d.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
-import { TILE_TEXTUREN, tileSurface } from './textures.js?v=20261104-1200';
-import { mount as mountPlan, shrinkImage } from './tileplan.js?v=20261104-1200';
-import { uid } from './model.js?v=20261104-1200';
-import { FREI, einstieg } from './frei.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as T from './tiles.js?v=20261104-1500';
+import * as K from './fliesenkatalog.js?v=20261104-1500';
+import { wallSurfaces, wallTilePlan, tileSummary, raumBauteile, bauteilSeiten, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261104-1500';
+import { floorTiles, zoneTiles } from './render2d.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
+import { TILE_TEXTUREN, tileSurface } from './textures.js?v=20261104-1500';
+import { mount as mountPlan, shrinkImage } from './tileplan.js?v=20261104-1500';
+import { uid } from './model.js?v=20261104-1500';
+import { FREI, einstieg } from './frei.js?v=20261104-1500';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (k === 'style') e.style.cssText = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null && c !== false) ap(e, c.nodeType ? c : document.createTextNode(c)); return e; };
 const zahl = (v, d = 2) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',');
@@ -175,7 +175,7 @@ class Studio {
       h('button', { class: 'btn sm', onclick: () => this.materialliste() }, '📋 Materialliste'),
       h('button', { class: 'btn sm', onclick: () => this.pdf() }, '📄 Verlegeplan PDF'),
       !this.istZone() ? h('button', { class: 'btn sm', title: 'Raum in 3D von innen ansehen – Boden, Wände, Vorwände', onclick: async () => { const id = this.roomId; const app = this.app; this.schliessen(); await app.setMode('3d'); for (let i = 0; i < 40 && !(app.modeView && app.modeView.raumInnen); i++) await new Promise(r => setTimeout(r, 100)); setTimeout(() => app.modeView && app.modeView.raumInnen && app.modeView.raumInnen(id), 300); } }, '🧊 3D von innen') : null,
-      h('button', { class: 'ib help', title: 'Hilfe zum Fliesen-Studio', onclick: () => import('./help.js?v=20261104-1200').then(H => H.open('fliesenstudio')) }, '?'),
+      h('button', { class: 'ib help', title: 'Hilfe zum Fliesen-Studio', onclick: () => import('./help.js?v=20261104-1500').then(H => H.open('fliesenstudio')) }, '?'),
       h('button', { class: 'btn pri', 'data-fs': 'fertig', onclick: () => this.schliessen() }, '✓ Fertig'));
   }
   /* ── links: Wohin? ── */
@@ -344,7 +344,7 @@ class Studio {
     };
     const internet = async () => {
       const t = { id: uid('t'), name: 'Fliese aus Internet', L: 600, B: 300, fuge: 2, farbe: '#d9d4cc', textur: 'uni', quelle: 'internet', bereich: ['boden', 'rand'].includes(this.ziel) ? 'boden' : 'wand' };
-      const M = await import('./ai.js?v=20261104-1200');
+      const M = await import('./ai.js?v=20261104-1500');
       M.searchTile(this.app, t, () => { if (t.hersteller || t.artikel) t.name = [t.hersteller, t.artikel].filter(Boolean).join(' '); this.ch('Fliese aus Internet', () => this.doc.p.tileLib.push(t), false); this.zuweisen(t); });
     };
     ap(liste, 
@@ -376,7 +376,7 @@ class Studio {
       h('div', { class: 'fs-eg' }, inp('farbname', 'Farbname'), inp('farbe', 'Farbe', 'color'), inp('farbe2', 'Zweitfarbe / Äderung', 'color'), sel('textur', 'Optik', [...Object.entries(TILE_TEXTUREN), ['bild', 'Foto der Fliese']]), inp('fugeFarbe', 'Fugenfarbe (Vorschlag)', 'color')),
       h('div', { class: 'fs-eg' }, inp('preisM2', 'Preis €/m² (netto)', 'number', 0.01), inp('paketM2', 'm² je Paket', 'number', 0.01), inp('stkPaket', 'Stück je Paket', 'number', 1), inp('pos', 'LV-Position'), inp('notiz', 'Notiz')),
       h('div', { class: 'fs-zeile wrap' }, h('button', { class: 'btn sm', onclick: () => file.click() }, '📷 Foto hochladen'), t.bildData ? h('button', { class: 'btn sm', onclick: () => this.libAendern(t, x => { x.bildData = null; if (x.textur === 'bild') x.textur = 'uni'; }) }, 'Foto entfernen') : null,
-        FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261104-1200'); const tmp = clone(t); M.searchTile(this.app, tmp, () => this.libAendern(t, (x) => { for (const k of ['hersteller', 'artikel', 'farbe', 'farbe2', 'textur', 'L', 'B', 'bildData', 'quelle']) if (tmp[k] !== undefined) x[k] = tmp[k]; if (tmp.artikel && !x.serie) x.serie = tmp.artikel; })); } }, '🔎 Optik im Internet suchen (KI)'),
+        FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261104-1500'); const tmp = clone(t); M.searchTile(this.app, tmp, () => this.libAendern(t, (x) => { for (const k of ['hersteller', 'artikel', 'farbe', 'farbe2', 'textur', 'L', 'B', 'bildData', 'quelle']) if (tmp[k] !== undefined) x[k] = tmp[k]; if (tmp.artikel && !x.serie) x.serie = tmp.artikel; })); } }, '🔎 Optik im Internet suchen (KI)'),
         t.link ? h('a', { href: t.link, target: '_blank', class: 'btn sm' }, '↗ Produktseite') : null, file),
       t.lvText ? h('details', {}, h('summary', {}, 'LV-Text'), h('div', { class: 'muted', style: 'white-space:pre-wrap;font-size:11.5px' }, t.lvText)) : null,
       h('div', { class: 'muted' }, 'Änderungen gelten sofort in allen Räumen, die diese Fliese verwenden.'));
@@ -670,14 +670,14 @@ class Studio {
   /* ───────── LV ───────── */
   async lvDatei(file = null) {
     if (FREI) return;
-    const M = await import('./ai.js?v=20261104-1200');
+    const M = await import('./ai.js?v=20261104-1500');
     const n0 = this.doc.p.tileLib.length;
     await M.readLV(this.app, file);
     if (this.doc.p.tileLib.length > n0) { this.tab = 'lv'; this.alles(); this.angebotAuto(); }
   }
   async lvDrive() {
     if (FREI) return;
-    const D = await import('./drive.js?v=20261104-1200'); const b = this.doc.p.meta.baustelle; const app = this.app;
+    const D = await import('./drive.js?v=20261104-1500'); const b = this.doc.p.meta.baustelle; const app = this.app;
     if (!D.token()) { try { await D.anmelden(); } catch (e) { return app.toast('Google Drive: ' + e.message, true); } }
     app.toast('Suche LV-Dateien im Baustellen-Ordner …');
     let liste = [];
@@ -746,7 +746,7 @@ class Studio {
     app.modal('Materialliste Fliesen – alle Räume', h('div', {}, t, summe ? h('div', { style: 'text-align:right;margin-top:8px;font-weight:700' }, 'Fliesen-Material gesamt (netto): ' + eur(summe)) : null, h('div', { class: 'muted', style: 'margin-top:8px' }, 'Bestellmengen inkl. Reserve und Reststückverwertung; Laibungen sind bei den Wänden enthalten. Kleber nach Format und Verlegeart.')), [h('button', { class: 'btn', onclick: csv }, 'Als CSV (Excel)'), h('button', { class: 'btn pri', onclick: () => this.pdf(true) }, 'Als PDF (dieser Raum)')]);
   }
   async pdf(nurMaterial = false) {
-    const M = await import('./print.js?v=20261104-1200');
+    const M = await import('./print.js?v=20261104-1500');
     const holder = h('div', { style: 'position:fixed;left:-9999px;top:0;width:800px;height:600px' }); ap(document.body, holder);
     const v = mountPlanEmbedded(this.app, holder, { roomId: this.roomId, flaeche: 'beides', mode: 'plan' });
     try { await M.printTilePlan(this.app, v, { nurMaterial }); } finally { if (v._ro) v._ro.disconnect(); holder.remove(); }

@@ -1,12 +1,12 @@
 // TW-CAD – Schnitte und Ansichten (vektoriell, maßstäblich druckbar)
-import * as G from './geom.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
-import { buildRoof } from './roof.js?v=20261104-1200';
-import { buildTerrain } from './terrain.js?v=20261104-1200';
-import { matById } from './material-db.js?v=20261104-1200';
-import { CanvasPainter, shade } from './painter.js?v=20261104-1200';
-import { PEN } from './render2d.js?v=20261104-1200';
-import { icon } from './icons.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
+import { buildRoof } from './roof.js?v=20261104-1500';
+import { buildTerrain } from './terrain.js?v=20261104-1500';
+import { matById } from './material-db.js?v=20261104-1500';
+import { CanvasPainter, shade } from './painter.js?v=20261104-1500';
+import { PEN } from './render2d.js?v=20261104-1500';
+import { icon } from './icons.js?v=20261104-1500';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 
@@ -211,6 +211,6 @@ class SectionView {
     for (const [d, n] of [['S', 'Ansicht Süd'], ['N', 'Ansicht Nord'], ['O', 'Ansicht Ost'], ['W', 'Ansicht West']]) a.append(h('div', { class: 'li' + (this.cur.kind === 'ans' && this.cur.dir === d ? ' on' : ''), onclick: () => { this.cur = { kind: 'ans', dir: d }; this.fit(); this.app.renderSide(); } }, h('span', { class: 'grow' }, n)));
     body.append(h('div', { class: 'sec' }, h('h4', {}, 'Schnitte'), l), h('div', { class: 'sec' }, h('h4', {}, 'Ansichten (Fassaden)'), a),
       h('div', { class: 'btns' }, h('button', { class: 'chip' + (this.farbig ? ' on' : ''), onclick: () => { this.farbig = !this.farbig; this.draw(); this.app.renderSide(); } }, 'farbig (Materialien)'), h('button', { class: 'btn sm', onclick: () => this.fit(), html: icon('fit') + 'Einpassen' }),
-        h('button', { class: 'btn sm pri', onclick: async () => { const M = await import('./print.js?v=20261104-1200'); M.openPrint(this.app, this.cur.kind === 'sec' ? { inhalt: 'schnitt', sec: this.cur.id } : { inhalt: 'ansicht', dir: this.cur.dir, farbig: this.farbig }); }, html: icon('print') + 'Drucken (PDF)' })));
+        h('button', { class: 'btn sm pri', onclick: async () => { const M = await import('./print.js?v=20261104-1500'); M.openPrint(this.app, this.cur.kind === 'sec' ? { inhalt: 'schnitt', sec: this.cur.id } : { inhalt: 'ansicht', dir: this.cur.dir, farbig: this.farbig }); }, html: icon('print') + 'Drucken (PDF)' })));
   }
 }

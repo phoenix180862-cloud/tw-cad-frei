@@ -1,6 +1,6 @@
 // TW-CAD – DXF-Import (ASCII-DXF R12 … 2018): Linien, Polylinien, Bögen, Kreise, Ellipsen, Texte, Blöcke; Ebenen; optional Wände aus parallelen Linien
-import * as G from './geom.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
 
 const ACI = { 1: '#d32f2f', 2: '#c9a400', 3: '#2e7d32', 4: '#00838f', 5: '#1565c0', 6: '#8e24aa', 7: '#1b1f24', 8: '#6b7280', 9: '#9ca3af', 30: '#ef6c00', 40: '#ff8f00', 250: '#374151', 251: '#4b5563', 252: '#6b7280', 253: '#9ca3af' };
 const aciHex = (n) => ACI[Math.abs(n)] || '#374151';

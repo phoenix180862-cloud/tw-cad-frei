@@ -1,6 +1,6 @@
 // TW-CAD – Treppen-Geometrie: gerade, viertel-/halbgewendelt, mit Podest (L/U), Spindel/Wendel
 // Ergebnis in Weltkoordinaten: Umriss, Stufenkanten (Steigungslinien), Auftrittsflächen, Lauflinie
-import * as G from './geom.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
 
 /* Abschnitte entlang des Laufs:
    { typ:'gerade', L }             – Lauf geradeaus

@@ -1,16 +1,16 @@
 // TW-CAD – Plandruck: DIN A0–A4, maßstabsgetreu (Vektor-PDF), Plankopf, Maßstabsleiste, Fliesen-Verlegeplan
-import * as G from './geom.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
-import { PdfPainter, CanvasPainter } from './painter.js?v=20261104-1200';
-import { drawPlan, PEN } from './render2d.js?v=20261104-1200';
-import { drawSite } from './site.js?v=20261104-1200';
-import { drawSection, drawElevation } from './section.js?v=20261104-1200';
-import { tileSummary, wallTilePlan } from './tilecalc.js?v=20261104-1200';
-import * as T from './tiles.js?v=20261104-1200';
-import { icon } from './icons.js?v=20261104-1200';
-import { FREI, WERBUNG, einstieg } from './frei.js?v=20261104-1200';
-import { pdfVorbereiten } from './i18n.js?v=20261104-1200';
-import { FIRMA } from './firma.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
+import { PdfPainter, CanvasPainter } from './painter.js?v=20261104-1500';
+import { drawPlan, PEN } from './render2d.js?v=20261104-1500';
+import { drawSite } from './site.js?v=20261104-1500';
+import { drawSection, drawElevation } from './section.js?v=20261104-1500';
+import { tileSummary, wallTilePlan } from './tilecalc.js?v=20261104-1500';
+import * as T from './tiles.js?v=20261104-1500';
+import { icon } from './icons.js?v=20261104-1500';
+import { FREI, WERBUNG, einstieg } from './frei.js?v=20261104-1500';
+import { pdfVorbereiten } from './i18n.js?v=20261104-1500';
+import { FIRMA } from './firma.js?v=20261104-1500';
 export { FIRMA };
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
@@ -228,7 +228,7 @@ class PrintView {
       row('Maßstab', sel('massstab', [['passend', 'passend (größter Normmaßstab)'], ...MASSSTAEBE.map(m => [m, '1:' + m])]))),
       h('div', { class: this.passt === false ? 'note warn' : 'note' }, this.passt === false ? `Passt bei 1:${this.scale} nicht auf ${j.format} – größeres Format wählen oder Maßstab „passend“.` : `Maßstab 1:${this.scale || '…'} – vektorgenau. Drucken mit „Tatsächliche Größe / 100 %“.`));
     body.append(h('div', { class: 'btns' }, h('button', { class: 'btn pri', onclick: async () => { try { const pdf = await makePlanPdf(app, j); pdf.save(`${doc.p.name} – ${contentFns(app, j).titel} ${j.format}.pdf`.replace(/[\\/:*?"<>|]/g, '_')); app.toast('PDF erstellt ✓'); } catch (e) { app.toast(e.message, true); } }, html: icon('print') + 'PDF erzeugen' }),
-      h('button', { class: 'btn', 'data-stufe': 'profi', onclick: async () => { const M = await import('./dxf.js?v=20261104-1200'); M.exportDXF(app, j.inhalt === 'grundriss' ? j.storey : null); }, html: icon('dxf') + 'DXF' })));
+      h('button', { class: 'btn', 'data-stufe': 'profi', onclick: async () => { const M = await import('./dxf.js?v=20261104-1500'); M.exportDXF(app, j.inhalt === 'grundriss' ? j.storey : null); }, html: icon('dxf') + 'DXF' })));
     body.append(h('div', { class: 'muted', style: 'margin-top:10px' }, 'Fliesen-Verlegepläne mit Wandabwicklung und Materialliste: im „Fliesenplan“ über „Verlegeplan als PDF“.'));
   }
 }

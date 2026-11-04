@@ -13,6 +13,7 @@ self.addEventListener('message', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   const req = e.request; if (req.method !== 'GET') return; const url = new URL(req.url);
+  if (url.searchParams.has('twv')) return; // Versionsprüfung (lib/tw-version.js) nie zwischenspeichern
   if (url.origin !== location.origin || url.pathname.includes('/hilfe/videos/')) return; // Google, KI, Videos: immer direkt
   const istSeite = req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
   if (istSeite) { // Netz zuerst (neue Version), offline aus dem Cache

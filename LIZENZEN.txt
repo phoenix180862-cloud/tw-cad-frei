@@ -2,7 +2,7 @@ TW-CAD – Lizenzhinweise
 =======================
 
 TW-CAD ist ein kostenloses Programm von Thomas Willwacher Fliesenlegermeister e.K. – www.thomas-willwacher.de
-Das Programm selbst (alle Dateien außer lib/) © Thomas Willwacher Fliesenlegermeister e.K. – www.thomas-willwacher.de. Kostenlose Nutzung erlaubt.
+Das Programm selbst (alle Dateien außer lib/, dazu der eigene Baustein lib/tw-version.js für Versionsanzeige und Update-Hinweis) © Thomas Willwacher Fliesenlegermeister e.K. – www.thomas-willwacher.de. Kostenlose Nutzung erlaubt.
 Alle Maße und Mengen ohne Gewähr – vor der Ausführung am Bau prüfen.
 
 TW-CAD verwendet folgende freie Bibliotheken (Ordner lib/). Ihre Lizenzen erlauben die kostenlose Weitergabe;

@@ -1,17 +1,17 @@
 // TW-CAD – Seitenleiste: Eigenschaften, Geschosse, Ebenen, Projekt
-import * as G from './geom.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
-import * as E from './edit.js?v=20261104-1200';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn } from './render2d.js?v=20261104-1200';
-import { icon } from './icons.js?v=20261104-1200';
-import { MATERIALIEN, matById } from './material-db.js?v=20261104-1200';
-import { pickMaterial } from './matpicker.js?v=20261104-1200';
-import * as K from './katalog.js?v=20261104-1200';
-import * as B from './bauteile.js?v=20261104-1200';
-import * as T from './treppe.js?v=20261104-1200';
-import { WAND_MATERIAL } from './tools.js?v=20261104-1200';
-import * as AB from './aufbau.js?v=20261104-1200';
-import { FREI, profi } from './frei.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
+import * as E from './edit.js?v=20261104-1500';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn } from './render2d.js?v=20261104-1500';
+import { icon } from './icons.js?v=20261104-1500';
+import { MATERIALIEN, matById } from './material-db.js?v=20261104-1500';
+import { pickMaterial } from './matpicker.js?v=20261104-1500';
+import * as K from './katalog.js?v=20261104-1500';
+import * as B from './bauteile.js?v=20261104-1500';
+import * as T from './treppe.js?v=20261104-1500';
+import { WAND_MATERIAL } from './tools.js?v=20261104-1500';
+import * as AB from './aufbau.js?v=20261104-1500';
+import { FREI, profi } from './frei.js?v=20261104-1500';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 
@@ -293,5 +293,5 @@ export function renderProject(app, body) {
     matButton(app, 'Fassade', doc.p.settings.stdFassade || 'putz-scheibenputz', null, (id) => { doc.p.settings.stdFassade = id; app.renderSide(); }, ['Putz', 'Klinker', 'Holz', 'Metall', 'Faserzement', 'HPL', 'Naturstein', 'Keramik', 'Glas']),
     matButton(app, 'Fenster', doc.p.settings.stdFenster || 'fenster-kst-7016-aussen', null, (id) => { doc.p.settings.stdFenster = id; app.renderSide(); }, ['Fenster']),
     matButton(app, 'Haustür', doc.p.settings.stdHaustuer || 'tuer-hoermann-700b', null, (id) => { doc.p.settings.stdHaustuer = id; app.renderSide(); }, ['Haustür']))));
-  body.append(h('div', { class: 'sec' }, h('h4', {}, FREI ? 'Projekt als Datei (Sicherung)' : 'Datei'), h('div', { class: 'btns' }, h('button', { class: 'btn', title: 'ganzes Projekt als .twcad-Datei herunterladen – zum Sichern oder Weitergeben', onclick: () => app.downloadProject() }, 'Als .twcad sichern'), h('button', { class: 'btn', title: '.twcad-Datei öffnen', onclick: () => app.openFile() }, 'Öffnen …'), h('button', { class: 'btn', 'data-stufe': 'profi', onclick: async () => { const M = await import('./dxf.js?v=20261104-1200'); M.exportDXF(app); }, html: icon('dxf') + 'DXF-Export' }))));
+  body.append(h('div', { class: 'sec' }, h('h4', {}, FREI ? 'Projekt als Datei (Sicherung)' : 'Datei'), h('div', { class: 'btns' }, h('button', { class: 'btn', title: 'ganzes Projekt als .twcad-Datei herunterladen – zum Sichern oder Weitergeben', onclick: () => app.downloadProject() }, 'Als .twcad sichern'), h('button', { class: 'btn', title: '.twcad-Datei öffnen', onclick: () => app.openFile() }, 'Öffnen …'), h('button', { class: 'btn', 'data-stufe': 'profi', onclick: async () => { const M = await import('./dxf.js?v=20261104-1500'); M.exportDXF(app); }, html: icon('dxf') + 'DXF-Export' }))));
 }

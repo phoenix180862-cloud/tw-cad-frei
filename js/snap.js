@@ -1,8 +1,8 @@
 // TW-CAD – Objektfang, Ortho/Polar, Spurlinien
-import * as G from './geom.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
-import { symbolFootprint, columnPoly, dimGeometry } from './render2d.js?v=20261104-1200';
-import { treppe } from './treppe.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
+import { symbolFootprint, columnPoly, dimGeometry } from './render2d.js?v=20261104-1500';
+import { treppe } from './treppe.js?v=20261104-1500';
 
 const PRIO = { end: 1, ecke: 1, schnitt: 2, mitte: 3, zentrum: 3, lot: 4, naechster: 6, raster: 8, spur: 7 };
 export const SNAP_LABEL = { end: 'Endpunkt', ecke: 'Ecke', schnitt: 'Schnittpunkt', mitte: 'Mitte', zentrum: 'Zentrum', lot: 'Lot', naechster: 'auf Linie', raster: 'Raster', spur: 'Spur', polar: 'Winkel', ortho: 'Ortho', abstand: 'Abstand' };

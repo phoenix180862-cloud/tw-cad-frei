@@ -1,9 +1,9 @@
 // TW-CAD – Fliesenflächen eines Raums: Boden + Wandabwicklung, Mengen, Startpunkt-Maße
-import * as G from './geom.js?v=20261104-1200';
-import * as W from './walls.js?v=20261104-1200';
-import * as T from './tiles.js?v=20261104-1200';
-import { floorTiles, roomRegion, wallTiles, zoneTiles, symbolFootprint } from './render2d.js?v=20261104-1200';
-import { FUGENTIEFE, BAUTEIL_FLIESEN } from './fliesenkatalog.js?v=20261104-1200';
+import * as G from './geom.js?v=20261104-1500';
+import * as W from './walls.js?v=20261104-1500';
+import * as T from './tiles.js?v=20261104-1500';
+import { floorTiles, roomRegion, wallTiles, zoneTiles, symbolFootprint } from './render2d.js?v=20261104-1500';
+import { FUGENTIEFE, BAUTEIL_FLIESEN } from './fliesenkatalog.js?v=20261104-1500';
 
 /** Wände eines Raums in Abwicklungs-Reihenfolge (von innen gesehen links → rechts) */
 export function wallSurfaces(doc, room) {
