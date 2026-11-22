@@ -3340,5 +3340,9 @@ export const DATEN = {
 "Holzoptik Eiche": "Drewnopodobna dąb",
 "Setzt die vorhandene Wand fort": "Kontynuuje istniejącą ścianę",
 "Setzt an die vorhandene Wand an": "Dołącza do istniejącej ściany",
-"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Dołączanie do istniejącej ściany: po prostu dotknij punktu początkowego na końcu ściany lub obok – nowa ściana płynnie ją przedłuży, a narożnik zostanie zamknięty na ukos, nawet jeśli palec trochę chybi."
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Dołączanie do istniejącej ściany: po prostu dotknij punktu początkowego na końcu ściany lub obok – nowa ściana płynnie ją przedłuży, a narożnik zostanie zamknięty na ukos, nawet jeśli palec trochę chybi.",
+"Vollbild": "Pełny ekran",
+"Vollbild aus": "Zamknij pełny ekran",
+"Vollbild beenden (Esc oder F11)": "Zamknij pełny ekran (Esc lub F11)",
+"Ganzer Bildschirm – Browserleiste und Taskleiste verschwinden (auch F11)": "Pełny ekran – pasek przeglądarki i pasek zadań znikają (także F11)"
 };

@@ -3340,5 +3340,9 @@ export const DATEN = {
 "Holzoptik Eiche": "Wood look oak",
 "Setzt die vorhandene Wand fort": "Continues the existing wall",
 "Setzt an die vorhandene Wand an": "Joins the existing wall",
-"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Joining an existing wall: simply tap the start point on or next to the end of the wall – the new wall continues it seamlessly and the corner is mitred, even if your finger is slightly off."
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Joining an existing wall: simply tap the start point on or next to the end of the wall – the new wall continues it seamlessly and the corner is mitred, even if your finger is slightly off.",
+"Vollbild": "Full screen",
+"Vollbild aus": "Exit full screen",
+"Vollbild beenden (Esc oder F11)": "Exit full screen (Esc or F11)",
+"Ganzer Bildschirm – Browserleiste und Taskleiste verschwinden (auch F11)": "Full screen – browser bar and taskbar disappear (also F11)"
 };

@@ -1,8 +1,8 @@
 // TW-CAD – Datenmodell, Rückgängig/Wiederholen, Speichern (IndexedDB)
-import { normalisiere } from './bauteile.js?v=20261122-2020';
-import { FREI } from './frei.js?v=20261122-2020';
-import { FIRMA } from './firma.js?v=20261122-2020';
-import { t } from './i18n.js?v=20261122-2020';
+import { normalisiere } from './bauteile.js?v=20261122-2055';
+import { FREI } from './frei.js?v=20261122-2055';
+import { FIRMA } from './firma.js?v=20261122-2055';
+import { t } from './i18n.js?v=20261122-2055';
 
 let _id = Date.now() % 1e7;
 export const uid = (p = 'e') => p + (++_id).toString(36) + Math.random().toString(36).slice(2, 5);

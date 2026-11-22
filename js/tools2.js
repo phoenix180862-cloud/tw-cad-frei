@@ -1,8 +1,8 @@
 // TW-CAD – zusätzliche Bauteil-Werkzeuge: Bogenwand, Körper/Podest, Deckendurchbruch, Unterzug, Dachfenster, Gaube
-import * as G from './geom.js?v=20261122-2020';
-import { Tool } from './tools.js?v=20261122-2020';
-import * as AB from './aufbau.js?v=20261122-2020';
-import { uid } from './model.js?v=20261122-2020';
+import * as G from './geom.js?v=20261122-2055';
+import { Tool } from './tools.js?v=20261122-2055';
+import * as AB from './aufbau.js?v=20261122-2055';
+import { uid } from './model.js?v=20261122-2055';
 
 const PREV = { color: '#2563eb', w: 0.35 };
 

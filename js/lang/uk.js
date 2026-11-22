@@ -3340,5 +3340,9 @@ export const DATEN = {
 "Holzoptik Eiche": "Під дерево дуб",
 "Setzt die vorhandene Wand fort": "Продовжує наявну стіну",
 "Setzt an die vorhandene Wand an": "Приєднується до наявної стіни",
-"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Приєднання до наявної стіни: просто торкніться початкової точки на кінці стіни або поруч – нова стіна плавно продовжить її, кут з’єднається під скосом, навіть якщо палець трохи схибив."
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Приєднання до наявної стіни: просто торкніться початкової точки на кінці стіни або поруч – нова стіна плавно продовжить її, кут з’єднається під скосом, навіть якщо палець трохи схибив.",
+"Vollbild": "Повний екран",
+"Vollbild aus": "Вийти з повного екрана",
+"Vollbild beenden (Esc oder F11)": "Вийти з повного екрана (Esc або F11)",
+"Ganzer Bildschirm – Browserleiste und Taskleiste verschwinden (auch F11)": "Повний екран – панель браузера й панель завдань зникають (також F11)"
 };

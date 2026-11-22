@@ -1,10 +1,10 @@
 // TW-CAD – Beispielprojekt (Einfamilienhaus mit Bad-Fliesenplanung, Lageplan, Dach)
-import { newProject, uid } from './model.js?v=20261122-2020';
-import { rectWalls } from './edit.js?v=20261122-2020';
-import { defaultTileCfg } from './tiles.js?v=20261122-2020';
-import { FREI } from './frei.js?v=20261122-2020';
-import { HEIMAT } from './firma.js?v=20261122-2020';
-import { t } from './i18n.js?v=20261122-2020';
+import { newProject, uid } from './model.js?v=20261122-2055';
+import { rectWalls } from './edit.js?v=20261122-2055';
+import { defaultTileCfg } from './tiles.js?v=20261122-2055';
+import { FREI } from './frei.js?v=20261122-2055';
+import { HEIMAT } from './firma.js?v=20261122-2055';
+import { t } from './i18n.js?v=20261122-2055';
 
 export function demoProject() {
   const p = newProject(t('Beispiel: Einfamilienhaus'));

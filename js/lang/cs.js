@@ -3340,5 +3340,9 @@ export const DATEN = {
 "Holzoptik Eiche": "Dřevodekor dub",
 "Setzt die vorhandene Wand fort": "Navazuje na stávající stěnu",
 "Setzt an die vorhandene Wand an": "Připojuje se ke stávající stěně",
-"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Připojení ke stávající stěně: počáteční bod jednoduše ťukněte na konec stěny nebo vedle něj – nová stěna na ni plynule naváže a roh se uzavře na pokos, i když prst trochu mine."
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Připojení ke stávající stěně: počáteční bod jednoduše ťukněte na konec stěny nebo vedle něj – nová stěna na ni plynule naváže a roh se uzavře na pokos, i když prst trochu mine.",
+"Vollbild": "Celá obrazovka",
+"Vollbild aus": "Ukončit celou obrazovku",
+"Vollbild beenden (Esc oder F11)": "Ukončit celou obrazovku (Esc nebo F11)",
+"Ganzer Bildschirm – Browserleiste und Taskleiste verschwinden (auch F11)": "Celá obrazovka – lišta prohlížeče a hlavní panel zmizí (také F11)"
 };
