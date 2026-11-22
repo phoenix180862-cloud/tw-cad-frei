@@ -1,5 +1,5 @@
 // TW-CAD – Dachgeometrie: Dachflächen als Minimum mehrerer Ebenen (exakte Teilflächen)
-import * as G from './geom.js?v=20261122-2125';
+import * as G from './geom.js?v=20261122-2130';
 
 /** Ebene: z(p) = z0 + k * dot(p - q, n) */
 const plane = (q, n, z0, k) => ({ q, n, z0, k });

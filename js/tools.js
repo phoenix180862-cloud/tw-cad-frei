@@ -1,16 +1,16 @@
 // TW-CAD – Werkzeuge
-import * as G from './geom.js?v=20261122-2125';
-import * as AB from './aufbau.js?v=20261122-2125';
-import * as W from './walls.js?v=20261122-2125';
-import * as E from './edit.js?v=20261122-2125';
-import { uid } from './model.js?v=20261122-2125';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-2125';
-import { defaultTileCfg } from './tiles.js?v=20261122-2125';
-import * as K from './katalog.js?v=20261122-2125';
-import * as B from './bauteile.js?v=20261122-2125';
-import * as T from './treppe.js?v=20261122-2125';
-import { t } from './i18n.js?v=20261122-2125';
-import { laengenSchritt } from './snap.js?v=20261122-2125';
+import * as G from './geom.js?v=20261122-2130';
+import * as AB from './aufbau.js?v=20261122-2130';
+import * as W from './walls.js?v=20261122-2130';
+import * as E from './edit.js?v=20261122-2130';
+import { uid } from './model.js?v=20261122-2130';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-2130';
+import { defaultTileCfg } from './tiles.js?v=20261122-2130';
+import * as K from './katalog.js?v=20261122-2130';
+import * as B from './bauteile.js?v=20261122-2130';
+import * as T from './treppe.js?v=20261122-2130';
+import { t } from './i18n.js?v=20261122-2130';
+import { laengenSchritt } from './snap.js?v=20261122-2130';
 
 const SEL = '#2563eb';
 const HART = new Set(['end', 'ecke', 'schnitt', 'mitte', 'zentrum', 'lot', 'spur', 'abstand']);
@@ -479,8 +479,9 @@ export class PlaceTool extends Tool {
     if (this.kind === 'symbol') {
       if (this.app.mode === 'lageplan' && (!SYMBOLE[S.symbolArt] || SYMBOLE[S.symbolArt].kat !== 'aussen')) { S.symbolArt = 'baum'; S.symbolW = S.symbolD = 3000; }
       const art = S.symbolArt && SYMBOLE[S.symbolArt] ? S.symbolArt : 'wc'; const kat = SYMBOLE[art].kat; const d = SYMBOLE[art]; const app = this.app;
-      const setArt = (v) => { S.symbolArt = v; const x = SYMBOLE[v]; S.symbolW = x.w; S.symbolD = x.d; app.refreshOpt(); };
+      const setArt = (v) => { S.symbolArt = v; const x = SYMBOLE[v]; S.symbolW = x.w; S.symbolD = x.d; S.symbolAussparen = null; app.refreshOpt(); };
       return [
+        { type: 'btn', label: '▦ Objekt wählen …', title: 'Fenster mit allen Objekten, Größen und Einstellungen', onclick: () => app.objekteFenster() },
         { label: 'Gruppe', type: 'sel', values: SYMBOL_KATEGORIEN, get: () => kat, set: v => setArt(symboleIn(v)[0][0]) },
         { label: 'Objekt', type: 'sel', values: symboleIn(kat).map(([k, v]) => [k, v.name]), get: () => art, set: v => setArt(v) },
         d.g ? { label: 'Größe', type: 'sel', values: [['', '– frei –'], ...d.g.map(([w, dd, l]) => [w + 'x' + dd, `${l} (${w / 10} × ${dd / 10} cm)`])], get: () => (S.symbolW || d.w) + 'x' + (S.symbolD || d.d), set: v => { if (!v) return; const [w, dd] = v.split('x').map(Number); S.symbolW = w; S.symbolD = dd; app.refreshOpt(); } } : null,
@@ -520,6 +521,7 @@ export class PlaceTool extends Tool {
   }
   autoRot(p) {
     if (this.kind !== 'symbol') return this.rot;
+    if (this.S.symbolAuto === false) return { rot: this.rot };
     const geo = W.storeyGeometry(this.doc, this.doc.p.activeStorey); const S = this.S; const D = S.symbolD || SYMBOLE[S.symbolArt || 'wc'].d;
     let best = null;
     for (const g of geo.wg.values()) for (const s of [1, -1]) {
@@ -533,7 +535,7 @@ export class PlaceTool extends Tool {
   }
   async down(ev) {
     const p = this.app.cursor.p; const S = this.S; const doc = this.doc;
-    if (this.kind === 'symbol') { const ar = this.autoRot(p); const k = S.symbolArt || 'wc'; const d = SYMBOLE[k]; doc.change('Objekt', () => doc.add({ type: 'symbol', kind: k, p: G.clone(ar.p || p), w: S.symbolW || d.w, d: S.symbolD || d.d, rot: ar.rot ?? this.rot, aussparen: !!d.aussparen })); return; }
+    if (this.kind === 'symbol') { const ar = this.autoRot(p); const k = S.symbolArt || 'wc'; const d = SYMBOLE[k]; doc.change('Objekt', () => doc.add({ type: 'symbol', kind: k, p: G.clone(ar.p || p), w: S.symbolW || d.w, d: S.symbolD || d.d, rot: ar.rot ?? this.rot, aussparen: S.symbolAussparen != null && S.symbolArt === k ? !!S.symbolAussparen : !!d.aussparen })); return; }
     if (this.kind === 'column') { doc.change('Stütze', () => doc.add({ type: 'column', p: G.clone(p), w: S.stuetzeB || 300, d: S.stuetzeT || 300, round: !!S.stuetzeRund, rot: 0 })); return; }
     if (this.kind === 'stair') { if (!this.pts.length) { this.pts = [p]; this.app.refreshHint(); return; } const st = this.stairAt(p); this.pts = []; if (!st) return; doc.change('Treppe', () => doc.add(st)); this.app.toast(`Treppe: ${T.treppe(st).linien.length} Steigungen · Auftritt ${G.fmtCm(T.treppe(st).auftritt)} cm`); return; }
     if (this.kind === 'text') { const r = await this.app.prompt('Text', [{ key: 't', label: 'Text', value: '' }]); if (r && r.t) doc.change('Text', () => doc.add({ type: 'text', p: G.clone(p), text: r.t, size: S.textGr || 3.5 })); return; }
