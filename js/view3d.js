@@ -1,24 +1,25 @@
 // TW-CAD – 3D-Ansicht: Gebäude aus Grundriss, Fassaden, Fenster/Türen, Dach, Gelände, Nachbarn
 import * as THREE from 'three';
-import { OrbitControls } from '../lib/OrbitControls.js?v=20261122-2130';
-import * as G from './geom.js?v=20261122-2130';
-import * as W from './walls.js?v=20261122-2130';
-import { buildRoof } from './roof.js?v=20261122-2130';
-import { buildTerrain, contours } from './terrain.js?v=20261122-2130';
-import { surfaceTexture, tileSurface } from './textures.js?v=20261122-2130';
-import * as K from './katalog.js?v=20261122-2130';
-import { normalisiere, eigenschaften } from './bauteile.js?v=20261122-2130';
-import { treppe } from './treppe.js?v=20261122-2130';
-import { matById, MATERIALIEN } from './material-db.js?v=20261122-2130';
-import { pickMaterial, thumb } from './matpicker.js?v=20261122-2130';
-import { floorTiles, roomRegion, symbolFootprint, SYMBOLE } from './render2d.js?v=20261122-2130';
-import { wallTilePlan, bauteilSeiten, raumBauteile, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261122-2130';
-import { BAUTEIL_FLIESEN } from './fliesenkatalog.js?v=20261122-2130';
-import { objekt3D } from './objekte3d.js?v=20261122-2130';
-import { footprint } from './site.js?v=20261122-2130';
-import { icon } from './icons.js?v=20261122-2130';
-import * as X from './view3d-plus.js?v=20261122-2130';
-import { profi, profiAb } from './frei.js?v=20261122-2130';
+import { OrbitControls } from '../lib/OrbitControls.js?v=20261122-2150';
+import * as G from './geom.js?v=20261122-2150';
+import * as W from './walls.js?v=20261122-2150';
+import { buildRoof } from './roof.js?v=20261122-2150';
+import { buildTerrain, contours } from './terrain.js?v=20261122-2150';
+import { surfaceTexture, tileSurface } from './textures.js?v=20261122-2150';
+import * as K from './katalog.js?v=20261122-2150';
+import { normalisiere, eigenschaften } from './bauteile.js?v=20261122-2150';
+import { treppe } from './treppe.js?v=20261122-2150';
+import { matById, MATERIALIEN } from './material-db.js?v=20261122-2150';
+import { pickMaterial, thumb } from './matpicker.js?v=20261122-2150';
+import { floorTiles, roomRegion, symbolFootprint, SYMBOLE } from './render2d.js?v=20261122-2150';
+import { wallTilePlan, bauteilSeiten, raumBauteile, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261122-2150';
+import { BAUTEIL_FLIESEN } from './fliesenkatalog.js?v=20261122-2150';
+import { objekt3D } from './objekte3d.js?v=20261122-2150';
+import { footprint } from './site.js?v=20261122-2150';
+import { icon } from './icons.js?v=20261122-2150';
+import * as X from './view3d-plus.js?v=20261122-2150';
+import { profi, profiAb } from './frei.js?v=20261122-2150';
+import * as BK from './baukasten3d.js?v=20261122-2150';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const M = 0.001; // mm → m
@@ -64,7 +65,7 @@ function capTris(poly) { const pts = poly.map(p => new THREE.Vector2(p.x, p.y));
 
 class View3D {
   constructor(app, el) {
-    this.app = app; this.el = el; el.innerHTML = ''; this.sideTitle = '3D & Fassade';
+    this.app = app; this.el = el; el.innerHTML = ''; this.sideTitle = 'Baukasten 3D';
     this.opt = { dach: true, gelaende: true, nachbarn: true, bis: null, schatten: true, stunde: 15, innen: false, hoehenlinien: true };
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -85,7 +86,7 @@ class View3D {
     const loop = () => { if (this.dead) return; if (!el.classList.contains('hidden')) { if (this.active === this.cam) this.controls.update(); this.renderer.render(this.scene, this.active); } this.raf = requestAnimationFrame(loop); };
     loop();
   }
-  hide() { this.dead = true; cancelAnimationFrame(this.raf); this.renderer.dispose(); this.el.innerHTML = ''; }
+  hide() { this.dead = true; this.pinsel = null; try { const sb = document.getElementById('sideBody'); if (sb) sb.onscroll = null; } catch (e) { } cancelAnimationFrame(this.raf); this.renderer.dispose(); this.el.innerHTML = ''; }
   refresh() { clearTimeout(this._rb); this._rb = setTimeout(() => this.build(false), 120); }
   resize() { const r = this.el.getBoundingClientRect(); if (!r.width) return; this.renderer.setSize(r.width, r.height, false); this.renderer.domElement.style.width = '100%'; this.renderer.domElement.style.height = '100%'; this.cam.aspect = r.width / r.height; this.cam.updateProjectionMatrix(); this.aspect = r.width / r.height; this.setOrtho(); }
   renderBar() {
@@ -160,6 +161,7 @@ class View3D {
     const c = { x: (this.bb.x0 + this.bb.x1) / 2, y: (this.bb.y0 + this.bb.y1) / 2 };
     this.sun.target.position.copy(V3(c.x, c.y, 0)); { const sc = this.sun.shadow.camera; const R = Math.min(90, Math.max(this.bb.w, this.bb.h) * M * 0.5 + 28); sc.left = -R; sc.right = R; sc.top = R; sc.bottom = -R; sc.updateProjectionMatrix(); }
     this.setSun();
+    BK.stilAnwenden(this);
     X.clipAnwenden(this);
     if (fit) { this.controls.target.copy(V3(c.x, c.y, 2800)); const R = Math.max(this.bb.w, this.bb.h); this.cam.position.copy(V3(c.x - R * 1.05, c.y - R * 1.9, R * 1.05)); this.controls.update(); }
   }
@@ -592,43 +594,34 @@ class View3D {
       if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) return; const r = cv.getBoundingClientRect();
       const m = new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
       this.ray.setFromCamera(m, this.active); const hit = this.ray.intersectObjects(this.pick, true)[0];
+      if (this.pinsel && hit) { let o = hit.object; while (o && !o.userData.kind) o = o.parent; if (o && o.userData.kind === 'wall') { BK.pinselAuf(this, o.userData.id); return; } this.app.toast('Der Pinsel streicht Wände – bitte eine Wand antippen.'); return; }
       this.sel = null; if (hit) { let o = hit.object; while (o && !o.userData.kind) o = o.parent; if (o) this.sel = o.userData; }
       this.app.renderSide();
     });
   }
   renderSide(body) {
     const doc = this.app.doc; const app = this.app;
+    body.onscroll = () => { this._bkScroll = body.scrollTop; }; if (this._bkScroll) requestAnimationFrame(() => { body.scrollTop = this._bkScroll; });
     const row = (l, el) => h('div', { class: 'row' }, h('label', {}, l), el);
     const facG = ['Putz', 'Klinker', 'Holz', 'Metall', 'Faserzement', 'HPL', 'Naturstein', 'Keramik', 'Glas'];
     const mbtn = (id, col, gruppen, onPick, label = 'Wählen …') => { const m = matById(id); const b = h('button', { class: 'btn sm', style: 'width:100%;justify-content:flex-start' }, h('span', { class: 'sw', style: `background:${col || (m && m.farben[0].hex) || '#ccc'}` }), m ? `${m.hersteller === 'herstellerneutral' ? '' : m.hersteller + ' '}${m.produkt}` : label); b.onclick = () => pickMaterial(app, { gruppen, current: id, color: col, onPick: (i, c) => { onPick(i, c); this.build(); app.renderSide(); } }); return b; };
     const sel = this.sel;
     if (sel) {
       const e = sel.kind === 'roof' ? doc.p.roofs.find(r => r.id === sel.id) : doc.byId(sel.id);
-      if (e && sel.kind === 'wall') body.append(h('div', { class: 'sec' }, h('h4', {}, 'Gewählte Wand'), row('Fassade', mbtn(e.facade, e.facadeColor, facG, (i, c) => doc.change('Fassade', () => { e.facade = i; e.facadeColor = c; }))), row('Sockel', mbtn(e.sockel, e.sockelColor, facG, (i, c) => doc.change('Sockel', () => { e.sockel = i; e.sockelColor = c; if (!e.sockelH) e.sockelH = 400; }))), h('button', { class: 'btn sm', onclick: () => { doc.change('Fassade alle', () => { for (const w of doc.all('wall').filter(w => w.art === 'aussen')) { w.facade = e.facade; w.facadeColor = e.facadeColor; } }); this.build(); } }, 'Auf alle Außenwände übertragen')));
+      if (e && sel.kind === 'wall') body.append(h('div', { class: 'sec bk-gew' }, h('h4', {}, 'Gewählte Wand'), row('Fassade', mbtn(e.facade, e.facadeColor, facG, (i, c) => doc.change('Fassade', () => { e.facade = i; e.facadeColor = c; }))), row('Sockel', mbtn(e.sockel, e.sockelColor, facG, (i, c) => doc.change('Sockel', () => { e.sockel = i; e.sockelColor = c; if (!e.sockelH) e.sockelH = 400; }))), h('button', { class: 'btn sm', onclick: () => { doc.change('Fassade alle', () => { for (const w of doc.all('wall').filter(w => w.art === 'aussen')) { w.facade = e.facade; w.facadeColor = e.facadeColor; } }); this.build(); } }, 'Auf alle Außenwände übertragen')));
       else if (e && sel.kind === 'opening') { normalisiere(e); body.append(h('div', { class: 'sec' }, h('h4', {}, e.kind === 'window' ? 'Gewähltes Fenster' : 'Gewählte Tür'),
         e.kind === 'window' ? row('Fenstertyp', (() => { const s2 = h('select', {}); for (const [v, l] of K.FENSTER_TYPEN) s2.append(h('option', { value: v, selected: (e.typ || 'dk1') === v }, l)); s2.onchange = () => doc.change('Fenstertyp', () => { e.typ = s2.value; }); return s2; })()) : e.kind === 'door' ? row('Türart', (() => { const s2 = h('select', {}); for (const [v, l] of K.TUER_ARTEN) s2.append(h('option', { value: v, selected: (e.art || 'dreh1') === v }, l)); s2.onchange = () => doc.change('Türart', () => { e.art = s2.value; }); return s2; })()) : null,
         eigenschaften(app, e),
         row(e.kind === 'window' ? 'Hersteller-Modell' : 'Modell', mbtn(e.stil, e.stilColor, e.kind === 'window' ? ['Fenster'] : ['Haustür'], (i, c) => doc.change('Ausführung', () => { e.stil = i; e.stilColor = c; if (e.kind === 'window' && c) e.farbeA = c; if (e.kind === 'door' && c) e.farbe = c; }))),
         h('button', { class: 'btn sm', onclick: () => { const keys = ['typ', 'stil', 'stilColor', 'farbeA', 'farbeI', 'sprossen', 'sprossenBild', 'material', 'glas', 'sonnenschutz', 'fbA', 'fbI', 'aufteilung', 'oberlichtH', 'farbe', 'zarge', 'blatt']; doc.change('Alle übernehmen', () => { for (const o of doc.all('opening').filter(o => o.kind === e.kind && o.id !== e.id && (e.kind !== 'door' || !!o.aussen === !!e.aussen))) for (const k of keys) if (e[k] !== undefined && (k !== 'typ' || e.kind === 'window')) o[k] = e[k]; }); this.build(); } }, e.kind === 'window' ? 'Auf alle Fenster übertragen' : 'Auf alle gleichartigen Türen übertragen'))); }
-      else if (e && sel.kind === 'roof') body.append(h('div', { class: 'sec' }, h('h4', {}, 'Dach'), row('Eindeckung', mbtn(e.material, e.farbe, ['Dach'], (i, c) => doc.change('Eindeckung', () => { e.material = i; e.farbe = c; }))), h('div', { class: 'muted' }, 'Form, Neigung, Überstand: unter „Grundriss → Geschosse“.')));
+      else if (e && sel.kind === 'roof') body.append(h('div', { class: 'sec' }, h('h4', {}, 'Dach'), row('Eindeckung', mbtn(e.material, e.farbe, ['Dach'], (i, c) => doc.change('Eindeckung', () => { e.material = i; e.farbe = c; }))), h('div', { class: 'muted' }, 'Form, Neigung und Überstand: unten im Baukasten unter „Dach“.')));
       else if (e && sel.kind === 'symbol') { const sd = SYMBOLE[e.kind] || {}; body.append(h('div', { class: 'sec' }, h('h4', {}, sd.name || 'Objekt'),
         sd.g ? row('Größe', (() => { const s2 = h('select', {}); s2.append(h('option', { value: '' }, `${G.fmtCm(e.w)} × ${G.fmtCm(e.d)} cm`)); for (const [w, d2, l] of sd.g) s2.append(h('option', { value: w + 'x' + d2 }, `${l} (${w / 10} × ${d2 / 10} cm)`)); s2.onchange = () => { if (!s2.value) return; const [w, d2] = s2.value.split('x').map(Number); doc.change('Größe', () => { e.w = w; e.d = d2; }); }; return s2; })()) : '',
         row('Drehen', h('div', { class: 'btns' }, h('button', { class: 'btn sm', onclick: () => doc.change('Drehen', () => { e.rot = ((e.rot || 0) + 90) % 360; }) }, '↻ 90°'), h('button', { class: 'btn sm red', onclick: () => { doc.change('Löschen', () => doc.remove([e.id])); this.sel = null; } }, 'Löschen'))),
         h('div', { class: 'muted' }, 'Position und weitere Angaben im Grundriss (Objekt anklicken).'))); }
       else if (e && sel.kind === 'room') body.append(h('div', { class: 'sec' }, h('h4', {}, `Raum ${e.nr || ''} ${e.name}`), h('button', { class: 'btn sm pri', onclick: () => app.openTiles(e.id) }, 'Fliesenplan öffnen')));
     } else body.append(h('div', { class: 'note' }, 'Tipp: Wand, Fenster, Tür oder Dach im 3D anklicken – dann hier Material und Farbe wählen.'), h('div', { class: 'note', 'data-stufe': 'einstieg' }, 'Raum von innen: oben „👁 Raum von innen …“ aufklappen und den Raum wählen – dann siehst du die Fliesen an Boden und Wänden. Maus ziehen = umschauen, Mausrad = vor/zurück, „Perspektive“ = wieder außen.'));
-    const any = doc.all('wall').find(w => w.art === 'aussen');
-    body.append(profi(h('div', { class: 'sec' }, h('h4', {}, 'Ganzes Haus'),
-      row('Fassade', mbtn(any && any.facade, any && any.facadeColor, facG, (i, c) => doc.change('Fassade alle', () => { for (const w of doc.all('wall').filter(w => w.art === 'aussen')) { w.facade = i; w.facadeColor = c; } }))),
-      row('Sockel', mbtn(any && any.sockel, any && any.sockelColor, facG, (i, c) => doc.change('Sockel alle', () => { for (const w of doc.all('wall').filter(w => w.art === 'aussen')) { w.sockel = i; w.sockelColor = c; if (!w.sockelH) w.sockelH = 400; } }))),
-      row('Sockelhöhe (mm)', (() => { const i = h('input', { type: 'number', value: (any && any.sockelH) || 0 }); i.onchange = () => { doc.change('Sockelhöhe', () => { for (const w of doc.all('wall').filter(w => w.art === 'aussen')) w.sockelH = +i.value; }); this.build(); }; return i; })()),
-      row('Fenster', mbtn((doc.all('opening').find(o => o.kind === 'window') || {}).stil, (doc.all('opening').find(o => o.kind === 'window') || {}).stilColor, ['Fenster'], (i, c) => doc.change('Fenster alle', () => { for (const o of doc.all('opening').filter(o => o.kind === 'window')) { o.stil = i; o.stilColor = c; } }))),
-      doc.p.roofs[0] ? row('Dach', mbtn(doc.p.roofs[0].material, doc.p.roofs[0].farbe, ['Dach'], (i, c) => doc.change('Eindeckung', () => { doc.p.roofs[0].material = i; doc.p.roofs[0].farbe = c; }))) : h('button', { class: 'btn sm', onclick: () => { doc.change('Dach', () => doc.p.roofs.push({ id: 'r' + Date.now(), storey: doc.p.storeys[doc.p.storeys.length - 1].id, typ: 'sattel', neigung: 35, ueberstand: 500, kniestock: 0, richtung: 'auto', material: 'dach-braas-rubin13v', farbe: null })); this.build(); app.renderSide(); } }, '+ Dach hinzufügen'))));
-    const bis = h('select', {}); bis.append(h('option', { value: '' }, 'alle Geschosse')); doc.p.storeys.forEach((s, i) => bis.append(h('option', { value: i, selected: this.opt.bis === i }, 'bis ' + s.name))); bis.onchange = () => { this.opt.bis = bis.value === '' ? null : +bis.value; this.build(); };
-    const n0 = body.children.length; X.sonnenPanel(this, body); X.schnittPanel(this, body); X.kameraPanel(this, body);
-    body.append(h('div', { class: 'sec' }, h('h4', {}, 'Darstellung'), row('Geschosse', bis),
-      h('div', { class: 'btns' }, h('button', { class: 'chip' + (this.opt.nachbarn ? ' on' : ''), onclick: () => { this.opt.nachbarn = !this.opt.nachbarn; this.build(); app.renderSide(); } }, 'Nachbargebäude'), h('button', { class: 'chip' + (this.opt.hoehenlinien ? ' on' : ''), onclick: () => { this.opt.hoehenlinien = !this.opt.hoehenlinien; this.build(); app.renderSide(); } }, 'Höhenlinien'))));
-    X.exportPanel(this, body); profiAb(body, n0);
+    BK.baukasten(this, body);
     body.append(h('div', { class: 'muted' }, 'Farben und Oberflächen sind Annäherungen an die Herstellerprodukte – für die endgültige Auswahl immer Originalmuster ansehen.'));
   }
 }
