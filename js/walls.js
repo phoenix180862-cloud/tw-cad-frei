@@ -1,5 +1,5 @@
 // TW-CAD – Wandgeometrie: Gehrungen, T-Stöße, Vereinigung, Räume, Öffnungen
-import * as G from './geom.js?v=20261104-1500';
+import * as G from './geom.js?v=20261122-1950';
 
 const JOIN_TOL = 6; // mm Toleranz für verbundene Wandenden
 
@@ -11,41 +11,89 @@ export function centerFromRef(a, b, t, ref) {
   return { a: G.add(a, G.mul(n, s)), b: G.add(b, G.mul(n, s)) };
 }
 
-function endInfo(w) {
-  const u = G.norm(G.sub(w.b, w.a)); return { u, n: G.perp(u), len: G.dist(w.a, w.b) };
+function endInfo(a, b) {
+  const u = G.norm(G.sub(b, a)); return { u, n: G.perp(u), len: G.dist(a, b) };
+}
+
+/** Ecken fangen (22.11.2026): Zwei freie Wandenden, die fast aufeinandertreffen (z. B. Wandzug mit Bezug
+ *  innen/außen, der nicht exakt am Startpunkt geschlossen wurde), werden zur Ecke zusammengeführt:
+ *  beide Enden rücken auf den Schnittpunkt der Achsen. Nur für die Darstellung/Geometrie – die Wanddaten bleiben. */
+function eckenFangen(walls) {
+  const E = new Map(walls.map(w => [w.id, { a: G.clone(w.a), b: G.clone(w.b) }]));
+  const frei = [];
+  for (const w of walls) for (const end of ['a', 'b']) {
+    const p = w[end];
+    const geteilt = walls.some(o => o !== w && (G.dist(o.a, p) < JOIN_TOL || G.dist(o.b, p) < JOIN_TOL));
+    if (!geteilt) frei.push({ w, end });
+  }
+  const benutzt = new Set();
+  const paare = [];
+  for (let i = 0; i < frei.length; i++) for (let j = i + 1; j < frei.length; j++) {
+    const A = frei[i], B = frei[j]; if (A.w === B.w) continue;
+    const d = G.dist(A.w[A.end], B.w[B.end]);
+    const grenze = Math.max(A.w.thickness, B.w.thickness, 20);
+    if (d >= grenze) continue;
+    paare.push({ A, B, d });
+  }
+  paare.sort((x, y) => x.d - y.d);
+  for (const { A, B } of paare) {
+    const kA = A.w.id + A.end, kB = B.w.id + B.end; if (benutzt.has(kA) || benutzt.has(kB)) continue;
+    const uA = G.norm(G.sub(A.w.b, A.w.a)), uB = G.norm(G.sub(B.w.b, B.w.a));
+    const pA = A.w[A.end], pB = B.w[B.end];
+    let X;
+    if (Math.abs(G.cross(uA, uB)) < 0.2) { // fast gleiche Richtung: Mitte, nur wenn die Achsen fast fluchten
+      if (G.closestOnLine(pB, A.w.a, A.w.b).d > JOIN_TOL * 2) continue;
+      X = G.mul(G.add(pA, pB), 0.5);
+    } else {
+      X = G.lineIntersect(A.w.a, uA, B.w.a, uB); if (!X) continue;
+      const lim = Math.max(A.w.thickness, B.w.thickness) * 1.5 + JOIN_TOL;
+      if (G.dist(X, pA) > lim || G.dist(X, pB) > lim) continue;
+    }
+    // Wand darf dabei nicht umklappen oder fast verschwinden
+    const eA = E.get(A.w.id), eB = E.get(B.w.id);
+    const altA = eA[A.end], altB = eB[B.end];
+    eA[A.end] = G.clone(X); eB[B.end] = G.clone(X);
+    const okA = G.dist(eA.a, eA.b) > 10 && G.dot(G.sub(eA.b, eA.a), uA) > 0;
+    const okB = G.dist(eB.a, eB.b) > 10 && G.dot(G.sub(eB.b, eB.a), uB) > 0;
+    if (!okA || !okB) { eA[A.end] = altA; eB[B.end] = altB; continue; }
+    benutzt.add(kA); benutzt.add(kB);
+  }
+  return E;
 }
 
 /** Geometrie aller Wände eines Geschosses */
 export function wallGeometry(walls) {
   const res = new Map();
+  const ecken = eckenFangen(walls);
   for (const w of walls) {
-    const { u, n, len } = endInfo(w); const h = w.thickness / 2;
+    const e = ecken.get(w.id); const wa = e.a, wb = e.b;
+    const { u, n, len } = endInfo(wa, wb); const h = w.thickness / 2;
     res.set(w.id, {
-      w, u, n, len, a: G.clone(w.a), b: G.clone(w.b),
-      aL: G.add(w.a, G.mul(n, h)), aR: G.sub(w.a, G.mul(n, h)), bL: G.add(w.b, G.mul(n, h)), bR: G.sub(w.b, G.mul(n, h)),
+      w, u, n, len, a: G.clone(wa), b: G.clone(wb), basis: G.clone(w.a),
+      aL: G.add(wa, G.mul(n, h)), aR: G.sub(wa, G.mul(n, h)), bL: G.add(wb, G.mul(n, h)), bR: G.sub(wb, G.mul(n, h)),
       extA: null, extB: null
     });
   }
   // 1) T-Stöße: Wandende liegt auf/in einer anderen Wand → bis Achse der anderen Wand verlängern
   for (const g of res.values()) {
     for (const end of ['a', 'b']) {
-      const p = g.w[end];
+      const p = g[end];
       let shared = false;
-      for (const o of res.values()) { if (o === g) continue; if (G.dist(o.w.a, p) < JOIN_TOL || G.dist(o.w.b, p) < JOIN_TOL) { shared = true; break; } }
+      for (const o of res.values()) { if (o === g) continue; if (G.dist(o.a, p) < JOIN_TOL || G.dist(o.b, p) < JOIN_TOL) { shared = true; break; } }
       if (shared) continue;
       for (const o of res.values()) {
         if (o === g) continue;
-        const c = G.closestOnLine(p, o.w.a, o.w.b);
+        const c = G.closestOnLine(p, o.a, o.b);
         if (c.t <= 0.001 || c.t >= 0.999) continue;
         if (c.d > o.w.thickness / 2 + JOIN_TOL) continue;
         const dirOut = end === 'a' ? G.mul(g.u, -1) : g.u;
         if (Math.abs(G.cross(dirOut, o.u)) < 0.2) continue; // nahezu parallel
-        const hit = G.lineIntersect(p, dirOut, o.w.a, o.u);
+        const hit = G.lineIntersect(p, dirOut, o.a, o.u);
         if (!hit || G.dist(hit, p) > o.w.thickness / 2 + JOIN_TOL + 1) continue;
         const h = g.w.thickness / 2;
         // Ecken an der Achse der Querwand, leicht darüber hinaus (Vereinigung schließt sauber)
-        const pL = G.lineIntersect(G.add(g.w.a, G.mul(g.n, h)), g.u, o.w.a, o.u);
-        const pR = G.lineIntersect(G.sub(g.w.a, G.mul(g.n, h)), g.u, o.w.a, o.u);
+        const pL = G.lineIntersect(G.add(g.a, G.mul(g.n, h)), g.u, o.a, o.u);
+        const pR = G.lineIntersect(G.sub(g.a, G.mul(g.n, h)), g.u, o.a, o.u);
         if (!pL || !pR) continue;
         if (end === 'a') { g.aL = pL; g.aR = pR; g.extA = hit; } else { g.bL = pL; g.bR = pR; g.extB = hit; }
         break;
@@ -55,7 +103,7 @@ export function wallGeometry(walls) {
   // 2) Knoten: gemeinsame Endpunkte → Gehrung zwischen Nachbarn (gegen den Uhrzeigersinn sortiert)
   const nodes = [];
   for (const g of res.values()) for (const end of ['a', 'b']) {
-    const p = g.w[end]; let node = nodes.find(nd => G.dist(nd.p, p) < JOIN_TOL);
+    const p = g[end]; let node = nodes.find(nd => G.dist(nd.p, p) < JOIN_TOL);
     if (!node) { node = { p: G.clone(p), items: [] }; nodes.push(node); }
     node.items.push({ g, end });
   }
@@ -98,9 +146,9 @@ export function wallGeometry(walls) {
 export function openingInfo(o, g) {
   const s0 = o.pos - o.width / 2, s1 = o.pos + o.width / 2;
   const h = g.w.thickness / 2 + 0.5;
-  const c0 = G.add(g.a, G.mul(g.u, s0)), c1 = G.add(g.a, G.mul(g.u, s1));
+  const o0 = g.basis || g.a; const c0 = G.add(o0, G.mul(g.u, s0)), c1 = G.add(o0, G.mul(g.u, s1));
   const rect = [G.sub(c0, G.mul(g.n, h)), G.sub(c1, G.mul(g.n, h)), G.add(c1, G.mul(g.n, h)), G.add(c0, G.mul(g.n, h))];
-  return { s0, s1, c0, c1, rect, center: G.add(g.a, G.mul(g.u, o.pos)) };
+  return { s0, s1, c0, c1, rect, center: G.add(o0, G.mul(g.u, o.pos)) };
 }
 
 /** Vollständige Geschoss-Geometrie (gecacht über doc.cacheVersion) */

@@ -1,8 +1,8 @@
 // TW-CAD – Lageplan: Grundstück, Nachbargebäude, Höhenpunkte, Höhenlinien, Gebäudeumriss
-import * as G from './geom.js?v=20261104-1500';
-import * as W from './walls.js?v=20261104-1500';
-import { buildTerrain, contours } from './terrain.js?v=20261104-1500';
-import { PEN } from './render2d.js?v=20261104-1500';
+import * as G from './geom.js?v=20261122-1950';
+import * as W from './walls.js?v=20261122-1950';
+import { buildTerrain, contours } from './terrain.js?v=20261122-1950';
+import { PEN } from './render2d.js?v=20261122-1950';
 
 let tcache = { key: null, model: null, lines: null };
 export function terrainOf(doc) {

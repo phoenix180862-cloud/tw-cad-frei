@@ -1,7 +1,7 @@
 // TW-CAD – Bearbeitungsfunktionen: Transformieren, Kopieren, Wand versetzen, Verlängern, Verbinden, Teilen
-import * as G from './geom.js?v=20261104-1500';
-import * as W from './walls.js?v=20261104-1500';
-import { uid } from './model.js?v=20261104-1500';
+import * as G from './geom.js?v=20261122-1950';
+import * as W from './walls.js?v=20261122-1950';
+import { uid } from './model.js?v=20261122-1950';
 
 /** Alle Punkte eines Elements mit f(p) abbilden. rot: zusätzlicher Drehwinkel (Rad), mirror: true */
 export function transformElement(e, f, rot = 0, mirror = false) {

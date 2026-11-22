@@ -1,16 +1,16 @@
 // TW-CAD – Werkzeuge
-import * as G from './geom.js?v=20261104-1500';
-import * as AB from './aufbau.js?v=20261104-1500';
-import * as W from './walls.js?v=20261104-1500';
-import * as E from './edit.js?v=20261104-1500';
-import { uid } from './model.js?v=20261104-1500';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261104-1500';
-import { defaultTileCfg } from './tiles.js?v=20261104-1500';
-import * as K from './katalog.js?v=20261104-1500';
-import * as B from './bauteile.js?v=20261104-1500';
-import * as T from './treppe.js?v=20261104-1500';
-import { t } from './i18n.js?v=20261104-1500';
-import { laengenSchritt } from './snap.js?v=20261104-1500';
+import * as G from './geom.js?v=20261122-1950';
+import * as AB from './aufbau.js?v=20261122-1950';
+import * as W from './walls.js?v=20261122-1950';
+import * as E from './edit.js?v=20261122-1950';
+import { uid } from './model.js?v=20261122-1950';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-1950';
+import { defaultTileCfg } from './tiles.js?v=20261122-1950';
+import * as K from './katalog.js?v=20261122-1950';
+import * as B from './bauteile.js?v=20261122-1950';
+import * as T from './treppe.js?v=20261122-1950';
+import { t } from './i18n.js?v=20261122-1950';
+import { laengenSchritt } from './snap.js?v=20261122-1950';
 
 const SEL = '#2563eb';
 const HART = new Set(['end', 'ecke', 'schnitt', 'mitte', 'zentrum', 'lot', 'spur', 'abstand']);
@@ -217,7 +217,8 @@ export class WallTool extends Tool {
   addPoint(p) {
     if (!this.pts.length) { this.pts = [G.clone(p)]; this.app.redraw(); return; }
     const last = this.pts[this.pts.length - 1]; if (G.dist(last, p) < 5) return;
-    const closing = this.pts.length >= 3 && G.dist(p, this.pts[0]) < 2;
+    // Schließen auch, wenn der Fang knapp neben dem Startpunkt landet (z. B. an der Wandecke statt am Bezugspunkt)
+    const closing = this.pts.length >= 3 && G.dist(p, this.pts[0]) < Math.max(2, Math.min(this.S.wandStaerke || 0, 400));
     this.doc.change('Wand', () => {
       if (closing) { this.closed = true; this.chain.push(this.newWall(last, this.pts[0]).id); this.rebuildChain(); }
       else {
