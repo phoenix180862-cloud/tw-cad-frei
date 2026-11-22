@@ -3337,5 +3337,8 @@ export const DATEN = {
 "Feinsteinzeug Beton": "Porcelain stoneware concrete look",
 "Feinsteinzeug Grau": "Porcelain stoneware grey",
 "Wandfliese Weiß glänzend": "Wall tile white gloss",
-"Holzoptik Eiche": "Wood look oak"
+"Holzoptik Eiche": "Wood look oak",
+"Setzt die vorhandene Wand fort": "Continues the existing wall",
+"Setzt an die vorhandene Wand an": "Joins the existing wall",
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Joining an existing wall: simply tap the start point on or next to the end of the wall – the new wall continues it seamlessly and the corner is mitred, even if your finger is slightly off."
 };

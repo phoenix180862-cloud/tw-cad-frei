@@ -3337,5 +3337,8 @@ export const DATEN = {
 "Feinsteinzeug Beton": "Slinutá dlažba betonový vzhled",
 "Feinsteinzeug Grau": "Slinutá dlažba šedá",
 "Wandfliese Weiß glänzend": "Obkládačka bílá lesklá",
-"Holzoptik Eiche": "Dřevodekor dub"
+"Holzoptik Eiche": "Dřevodekor dub",
+"Setzt die vorhandene Wand fort": "Navazuje na stávající stěnu",
+"Setzt an die vorhandene Wand an": "Připojuje se ke stávající stěně",
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Připojení ke stávající stěně: počáteční bod jednoduše ťukněte na konec stěny nebo vedle něj – nová stěna na ni plynule naváže a roh se uzavře na pokos, i když prst trochu mine."
 };

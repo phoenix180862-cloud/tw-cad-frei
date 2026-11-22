@@ -1,16 +1,16 @@
 // TW-CAD – Werkzeuge
-import * as G from './geom.js?v=20261122-1950';
-import * as AB from './aufbau.js?v=20261122-1950';
-import * as W from './walls.js?v=20261122-1950';
-import * as E from './edit.js?v=20261122-1950';
-import { uid } from './model.js?v=20261122-1950';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-1950';
-import { defaultTileCfg } from './tiles.js?v=20261122-1950';
-import * as K from './katalog.js?v=20261122-1950';
-import * as B from './bauteile.js?v=20261122-1950';
-import * as T from './treppe.js?v=20261122-1950';
-import { t } from './i18n.js?v=20261122-1950';
-import { laengenSchritt } from './snap.js?v=20261122-1950';
+import * as G from './geom.js?v=20261122-2020';
+import * as AB from './aufbau.js?v=20261122-2020';
+import * as W from './walls.js?v=20261122-2020';
+import * as E from './edit.js?v=20261122-2020';
+import { uid } from './model.js?v=20261122-2020';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-2020';
+import { defaultTileCfg } from './tiles.js?v=20261122-2020';
+import * as K from './katalog.js?v=20261122-2020';
+import * as B from './bauteile.js?v=20261122-2020';
+import * as T from './treppe.js?v=20261122-2020';
+import { t } from './i18n.js?v=20261122-2020';
+import { laengenSchritt } from './snap.js?v=20261122-2020';
 
 const SEL = '#2563eb';
 const HART = new Set(['end', 'ecke', 'schnitt', 'mitte', 'zentrum', 'lot', 'spur', 'abstand']);
@@ -155,10 +155,63 @@ export class WallTool extends Tool {
     return w;
   }
   refOff() { const S = this.S; return S.wandBezug === 'links' ? -S.wandStaerke / 2 : S.wandBezug === 'rechts' ? S.wandStaerke / 2 : 0; }
+  /** Ansetzen (22.11.2026): Startpunkt nahe am freien Ende einer vorhandenen Wand gleicher Stärke → der neue Zug setzt den
+   *  Wandzug dieser Wand fort (Gehrung, Bezugslinie läuft durch). Fängt der Zeiger die Wandecke statt des Endpunkts,
+   *  sprang die neue Wand sonst um die halbe Wandstärke. Andere Stärke oder schon belegtes Ende: Start genau im Achs-Ende. */
+  anschlussSuchen(p) {
+    if (this.mode !== 'kette') return null;
+    const st = this.doc.p.activeStorey; const alle = this.doc.all('wall', st); let best = null;
+    for (const w of alle) for (const end of ['a', 'b']) {
+      const q = w[end]; const d = G.dist(p, q); const grenze = Math.max(w.thickness, 30);
+      if (d > grenze || (best && d >= best.d)) continue;
+      const frei = !alle.some(o => o !== w && (G.dist(o.a, q) < 6 || G.dist(o.b, q) < 6));
+      best = { w, end, d, frei };
+    }
+    return best;
+  }
+  startPunkte(p) {
+    this.basis = 0; this.basisWand = null; this.anschluss = null;
+    // auch die ungefangene Zeigerstelle prüfen: Abstandsmaß/Raster können den Punkt von der Wand weggezogen haben
+    const roh = this.app.cursor && this.app.cursor.raw;
+    let an = this.anschlussSuchen(p); const an2 = roh ? this.anschlussSuchen(roh) : null;
+    if (an2 && (!an || an2.d < an.d)) an = an2;
+    if (!an) return [G.clone(p)];
+    const w = an.w, off = this.refOff();
+    if (an.frei && Math.abs(w.thickness - this.S.wandStaerke) < 0.5 && G.dist(w.a, w.b) > 10) {
+      const rueck = an.end === 'a';
+      const von = rueck ? w.b : w.a, bis = rueck ? w.a : w.b;
+      const n = G.perp(G.norm(G.sub(bis, von)));
+      const offen = this.doc.all('opening', this.doc.p.activeStorey).filter(o => o.wall === w.id).map(o => [o, o.pos]);
+      this.basisWand = { id: w.id, rueck, a0: G.clone(w.a), b0: G.clone(w.b), offen };
+      this.basis = 1; this.chain = [w.id];
+      if (this.app.toast) this.app.toast('Setzt die vorhandene Wand fort');
+      return [G.sub(von, G.mul(n, off)), G.sub(bis, G.mul(n, off))];
+    }
+    this.anschluss = G.clone(w[an.end]);
+    if (G.dist(w[an.end], p) > 1 && this.app.toast) this.app.toast('Setzt an die vorhandene Wand an');
+    return [G.clone(w[an.end])];
+  }
+  /** Andere Wandstärke: ersten Wandabschnitt parallel so verschieben, dass die Achse genau im Anschlusspunkt beginnt */
+  anschlussAusrichten(off) {
+    const A = this.anschluss; if (!A || !off || this.pts.length < 2) return;
+    const d0 = G.norm(G.sub(this.pts[1], this.pts[0])); if (!isFinite(d0.x)) return;
+    const neu = G.sub(A, G.mul(G.perp(d0), off)), dv = G.sub(neu, this.pts[0]); if (G.len(dv) < 0.01) return;
+    this.pts[0] = neu; this.pts[1] = G.add(this.pts[1], dv); // Richtung bleibt, die Wand läuft gerade weiter
+  }
   rebuildChain() {
     const off = this.refOff();
+    if (!this.closed) this.anschlussAusrichten(off);
     const c = off ? E.offsetPolyline(this.pts, off, this.closed) : this.pts;
-    this.chain.forEach((id, i) => { const w = this.doc.byId(id); if (!w) return; w.a = G.clone(c[i]); w.b = G.clone(c[(i + 1) % c.length]); });
+    const B = this.basisWand;
+    this.chain.forEach((id, i) => {
+      const w = this.doc.byId(id); if (!w) return;
+      const p0 = G.clone(c[i]), p1 = G.clone(c[(i + 1) % c.length]);
+      if (B && id === B.id && B.rueck) {
+        // vorhandene Wand rückwärts fortgesetzt: Richtung der Wand bleibt, Öffnungen behalten ihren Platz
+        w.b = p0; w.a = p1; const u = G.norm(G.sub(B.b0, B.a0)); const dl = G.dot(G.sub(w.a, B.a0), u);
+        for (const [o, pos] of B.offen) o.pos = pos - dl;
+      } else { w.a = p0; w.b = p1; }
+    });
   }
   down(ev) {
     if (ev.button === 2) { this.finish(); return; }
@@ -166,7 +219,7 @@ export class WallTool extends Tool {
     // Finger/Stift: drücken – ziehen – loslassen; der Punkt entsteht beim Loslassen (Vorschau folgt dem Finger)
     if (ev.pointerType && ev.pointerType !== 'mouse') {
       this.druck = { sx: ev.sx, sy: ev.sy, hatte: this.pts.length > 0 };
-      if (!this.pts.length) { this.pts = [G.clone(cur.p)]; this.app.redraw(); }
+      if (!this.pts.length) { this.pts = this.startPunkte(cur.p); this.app.redraw(); }
       return;
     }
     this.platzieren(cur.p, cur.kind);
@@ -178,7 +231,7 @@ export class WallTool extends Tool {
     const cur = this.app.cursor; this.platzieren(cur.p, cur.kind);
   }
   /** Zweiter Finger (Zoomen) – angefangenen Startpunkt wieder verwerfen */
-  druckAbbrechen() { const d = this.druck; this.druck = null; if (d && !d.hatte) { this.pts = []; this.app.redraw(); } }
+  druckAbbrechen() { const d = this.druck; this.druck = null; if (d && !d.hatte) { this.pts = []; this.chain = []; this.basis = 0; this.basisWand = null; this.anschluss = null; this.app.redraw(); } }
   platzieren(p, kind) {
     if (this.mode === 'rechteck') {
       if (!this.pts.length) { this.pts = [G.clone(p)]; this.app.massLeiste && this.app.massLeiste(); return; }
@@ -192,10 +245,10 @@ export class WallTool extends Tool {
     this.app.massLeiste && this.app.massLeiste();
   }
   /** Länge der zuletzt gezeichneten Wand (Bezugslinie) */
-  letzteLaenge() { const n = this.pts.length; return this.mode === 'kette' && n >= 2 ? G.dist(this.pts[n - 2], this.pts[n - 1]) : null; }
+  letzteLaenge() { const n = this.pts.length; return this.mode === 'kette' && n >= 2 && this.chain.length > (this.basis || 0) ? G.dist(this.pts[n - 2], this.pts[n - 1]) : null; }
   /** Zuletzt gezeichnete Wand nachträglich exakt auf Länge bringen (Richtung bleibt, Endpunkt wandert) */
   letzteSetzen(L) {
-    const n = this.pts.length; if (this.mode !== 'kette' || n < 2 || !(L > 0)) return false;
+    const n = this.pts.length; if (this.mode !== 'kette' || n < 2 || !(L > 0) || this.chain.length <= (this.basis || 0)) return false;
     const a = this.pts[n - 2], u = G.norm(G.sub(this.pts[n - 1], a));
     this.doc.change('Wandlänge', () => { this.pts[n - 1] = G.add(a, G.mul(u, L)); this.rebuildChain(); });
     this.app.redraw(); this.app.massLeiste && this.app.massLeiste(); return true;
@@ -203,7 +256,7 @@ export class WallTool extends Tool {
   /** letzte Wand des Zugs entfernen (Knopf „Zurück“ / Rücktaste) */
   zurueck() {
     if (this.mode !== 'kette' || !this.pts.length) return false;
-    if (this.pts.length === 1) { this.reset(); this.app.massLeiste && this.app.massLeiste(); return true; }
+    if (this.pts.length === 1 || this.chain.length <= (this.basis || 0)) { this.reset(); this.app.massLeiste && this.app.massLeiste(); return true; }
     // Verlauf zurückspulen (Längenkorrekturen + das Anlegen der letzten Wand) – so bleibt Strg+Z/„Letzter Schritt“ danach stimmig
     const U = this.doc.undoStack || []; const top = () => U.length ? U[U.length - 1].label : null;
     let k = 0; while (top() === 'Wandlänge' && k++ < 20) this.doc.undo();
@@ -215,7 +268,7 @@ export class WallTool extends Tool {
   /** Wandzug zum Startpunkt schließen */
   schliessen() { if (this.mode !== 'kette' || this.pts.length < 3) return false; this.addPoint(this.pts[0]); this.app.massLeiste && this.app.massLeiste(); return true; }
   addPoint(p) {
-    if (!this.pts.length) { this.pts = [G.clone(p)]; this.app.redraw(); return; }
+    if (!this.pts.length) { this.pts = this.startPunkte(p); this.app.redraw(); return; }
     const last = this.pts[this.pts.length - 1]; if (G.dist(last, p) < 5) return;
     // Schließen auch, wenn der Fang knapp neben dem Startpunkt landet (z. B. an der Wandecke statt am Bezugspunkt)
     const closing = this.pts.length >= 3 && G.dist(p, this.pts[0]) < Math.max(2, Math.min(this.S.wandStaerke || 0, 400));
@@ -223,7 +276,7 @@ export class WallTool extends Tool {
       if (closing) { this.closed = true; this.chain.push(this.newWall(last, this.pts[0]).id); this.rebuildChain(); }
       else {
         this.pts.push(G.clone(p)); this.chain.push(this.newWall(last, p).id);
-        if (this.chain.length === 1 && this.app.abPending) { const sh = this.app.abstandShift(this, p); if (G.len(sh) > 0.01) { this.pts[0] = G.add(this.pts[0], sh); this.pts[1] = G.add(this.pts[1], sh); } this.app.abPending = null; }
+        if (this.chain.length === 1 && this.app.abPending) { const sh = this.app.abstandShift(this, p); if (G.len(sh) > 0.01) { this.pts[0] = G.add(this.pts[0], sh); this.pts[1] = G.add(this.pts[1], sh); this.anschluss = null; } this.app.abPending = null; }
         this.rebuildChain();
       }
     });
@@ -235,7 +288,7 @@ export class WallTool extends Tool {
     this.pts = []; this.app.toast(`Raum ${G.fmtCm(Math.abs(b.x - a.x))} × ${G.fmtCm(Math.abs(b.y - a.y))} cm angelegt`);
     this.app.autoRooms();
   }
-  reset() { this.pts = []; this.chain = []; this.closed = false; this.druck = null; if (this.app.abPending) this.app.abPending = null; this.app.redraw(); this.app.autoRooms(); this.app.massLeiste && this.app.massLeiste(); }
+  reset() { this.pts = []; this.chain = []; this.closed = false; this.druck = null; this.anschluss = null; this.basis = 0; this.basisWand = null; if (this.app.abPending) this.app.abPending = null; this.app.redraw(); this.app.autoRooms(); this.app.massLeiste && this.app.massLeiste(); }
   finish() { this.reset(); }
   cancel() { if (this.pts.length) { this.reset(); return true; } return false; }
   key(e) { if (e.key === 'Backspace' && this.pts.length > 1 && this.mode === 'kette') return this.zurueck(); return false; }
@@ -261,8 +314,10 @@ export class WallTool extends Tool {
     if (!this.pts.length) return;
     const sh = this.app.abstandShift ? this.app.abstandShift(this, cur.p) : { x: 0, y: 0 };
     const z = this.ziel(cur.p); if (!z) return;
-    const a = G.add(this.pts[this.pts.length - 1], sh), b = G.add(z, sh);
-    const off = this.refOff(); const c = E.offsetPolyline([a, b], off);
+    let a = G.add(this.pts[this.pts.length - 1], sh); const b = G.add(z, sh);
+    const off = this.refOff();
+    if (off && this.pts.length === 1 && this.anschluss) { for (let k = 0; k < 4; k++) { const d0 = G.norm(G.sub(b, a)); if (!isFinite(d0.x)) break; a = G.sub(this.anschluss, G.mul(G.perp(d0), off)); } }
+    const c = E.offsetPolyline([a, b], off);
     P.fill([G.stripPoly(c[0], c[1], t / 2)], '#93c5fd', 0.55, { color: SEL, w: 0.18 });
     P.line(a, b, { color: '#dc2626', w: 0.18, dash: [2, 1] });
     this.app.dyn(this.lenLabel(a, b) + (this.masz.L > 0 ? ' 🔒' : ''));

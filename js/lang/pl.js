@@ -3337,5 +3337,8 @@ export const DATEN = {
 "Feinsteinzeug Beton": "Gres betonopodobny",
 "Feinsteinzeug Grau": "Gres szary",
 "Wandfliese Weiß glänzend": "Płytka ścienna biała połysk",
-"Holzoptik Eiche": "Drewnopodobna dąb"
+"Holzoptik Eiche": "Drewnopodobna dąb",
+"Setzt die vorhandene Wand fort": "Kontynuuje istniejącą ścianę",
+"Setzt an die vorhandene Wand an": "Dołącza do istniejącej ściany",
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Dołączanie do istniejącej ściany: po prostu dotknij punktu początkowego na końcu ściany lub obok – nowa ściana płynnie ją przedłuży, a narożnik zostanie zamknięty na ukos, nawet jeśli palec trochę chybi."
 };

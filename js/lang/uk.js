@@ -3337,5 +3337,8 @@ export const DATEN = {
 "Feinsteinzeug Beton": "Керамограніт під бетон",
 "Feinsteinzeug Grau": "Керамограніт сірий",
 "Wandfliese Weiß glänzend": "Настінна плитка біла глянцева",
-"Holzoptik Eiche": "Під дерево дуб"
+"Holzoptik Eiche": "Під дерево дуб",
+"Setzt die vorhandene Wand fort": "Продовжує наявну стіну",
+"Setzt an die vorhandene Wand an": "Приєднується до наявної стіни",
+"An eine vorhandene Wand ansetzen: Startpunkt einfach auf oder neben das Ende der Wand tippen – die neue Wand setzt sie nahtlos fort, die Ecke wird auf Gehrung geschlossen, auch wenn der Finger etwas daneben liegt.": "Приєднання до наявної стіни: просто торкніться початкової точки на кінці стіни або поруч – нова стіна плавно продовжить її, кут з’єднається під скосом, навіть якщо палець трохи схибив."
 };
