@@ -1,25 +1,25 @@
 // TW-CAD – 3D-Ansicht: Gebäude aus Grundriss, Fassaden, Fenster/Türen, Dach, Gelände, Nachbarn
 import * as THREE from 'three';
-import { OrbitControls } from '../lib/OrbitControls.js?v=20261122-2210';
-import * as G from './geom.js?v=20261122-2210';
-import * as W from './walls.js?v=20261122-2210';
-import { buildRoof } from './roof.js?v=20261122-2210';
-import { buildTerrain, contours } from './terrain.js?v=20261122-2210';
-import { surfaceTexture, tileSurface } from './textures.js?v=20261122-2210';
-import * as K from './katalog.js?v=20261122-2210';
-import { normalisiere, eigenschaften } from './bauteile.js?v=20261122-2210';
-import { treppe } from './treppe.js?v=20261122-2210';
-import { matById, MATERIALIEN } from './material-db.js?v=20261122-2210';
-import { pickMaterial, thumb } from './matpicker.js?v=20261122-2210';
-import { floorTiles, roomRegion, symbolFootprint, SYMBOLE } from './render2d.js?v=20261122-2210';
-import { wallTilePlan, bauteilSeiten, raumBauteile, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261122-2210';
-import { BAUTEIL_FLIESEN } from './fliesenkatalog.js?v=20261122-2210';
-import { objekt3D } from './objekte3d.js?v=20261122-2210';
-import { footprint } from './site.js?v=20261122-2210';
-import { icon } from './icons.js?v=20261122-2210';
-import * as X from './view3d-plus.js?v=20261122-2210';
-import { profi, profiAb } from './frei.js?v=20261122-2210';
-import * as BK from './baukasten3d.js?v=20261122-2210';
+import { OrbitControls } from '../lib/OrbitControls.js?v=20261122-2215';
+import * as G from './geom.js?v=20261122-2215';
+import * as W from './walls.js?v=20261122-2215';
+import { buildRoof } from './roof.js?v=20261122-2215';
+import { buildTerrain, contours } from './terrain.js?v=20261122-2215';
+import { surfaceTexture, tileSurface } from './textures.js?v=20261122-2215';
+import * as K from './katalog.js?v=20261122-2215';
+import { normalisiere, eigenschaften } from './bauteile.js?v=20261122-2215';
+import { treppe } from './treppe.js?v=20261122-2215';
+import { matById, MATERIALIEN } from './material-db.js?v=20261122-2215';
+import { pickMaterial, thumb } from './matpicker.js?v=20261122-2215';
+import { floorTiles, roomRegion, symbolFootprint, SYMBOLE } from './render2d.js?v=20261122-2215';
+import { wallTilePlan, bauteilSeiten, raumBauteile, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261122-2215';
+import { BAUTEIL_FLIESEN } from './fliesenkatalog.js?v=20261122-2215';
+import { objekt3D } from './objekte3d.js?v=20261122-2215';
+import { footprint } from './site.js?v=20261122-2215';
+import { icon } from './icons.js?v=20261122-2215';
+import * as X from './view3d-plus.js?v=20261122-2215';
+import { profi, profiAb } from './frei.js?v=20261122-2215';
+import * as BK from './baukasten3d.js?v=20261122-2215';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const M = 0.001; // mm → m
