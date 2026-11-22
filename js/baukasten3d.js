@@ -1,11 +1,11 @@
 // TW-CAD – Baukasten 3D: Darstellungsstil, Fassade mit Pinsel, Sockel, Fenster & Türen, Dach, Umgebung (Thomas 22.11.2026)
 // Alles zum Antippen: Material und Farbe antippen = sofort im Haus zu sehen. Einzelne Wände mit dem Pinsel.
 import * as THREE from 'three';
-import { MATERIALIEN, matById, FASSADE_GRUPPEN } from './material-db.js?v=20261122-2150';
-import { thumb } from './matpicker.js?v=20261122-2150';
-import * as K from './katalog.js?v=20261122-2150';
-import * as X from './view3d-plus.js?v=20261122-2150';
-import { profi } from './frei.js?v=20261122-2150';
+import { MATERIALIEN, matById, FASSADE_GRUPPEN } from './material-db.js?v=20261122-2210';
+import { thumb } from './matpicker.js?v=20261122-2210';
+import * as K from './katalog.js?v=20261122-2210';
+import * as X from './view3d-plus.js?v=20261122-2210';
+import { profi } from './frei.js?v=20261122-2210';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== false && v != null) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null && c !== false) e.append(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c); return e; };
 

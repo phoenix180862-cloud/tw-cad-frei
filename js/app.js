@@ -1,24 +1,24 @@
 // TW-CAD – Hauptprogramm
-import * as G from './geom.js?v=20261122-2150';
-import * as W from './walls.js?v=20261122-2150';
-import * as E from './edit.js?v=20261122-2150';
-import { Doc, newProject, saveProject, loadProject, listProjects, deleteProject, migrate, uid } from './model.js?v=20261122-2150';
-import { View2D } from './view2d.js?v=20261122-2150';
-import { snap, SNAP_LABEL } from './snap.js?v=20261122-2150';
-import { makeTool } from './tools.js?v=20261122-2150';
-import { icon } from './icons.js?v=20261122-2150';
-import { symbolFootprint, columnPoly, dimGeometry, drawDim, drawSymbol, floorTiles, SYMBOLE } from './render2d.js?v=20261122-2150';
-import { CanvasPainter } from './painter.js?v=20261122-2150';
-import { renderProps, renderStoreys, renderLayers, renderProject } from './props.js?v=20261122-2150';
-import { demoProject } from './demo.js?v=20261122-2150';
-import * as Help from './help.js?v=20261122-2150';
-import { makeTool2 } from './tools2.js?v=20261122-2150';
-import { hydrateUnderlays } from './pdfimport.js?v=20261122-2150';
-import * as AB from './abstand.js?v=20261122-2150';
-import { treppe } from './treppe.js?v=20261122-2150';
-import * as F from './frei.js?v=20261122-2150';
-import * as I18N from './i18n.js?v=20261122-2150';
-import * as ML from './massleiste.js?v=20261122-2150';
+import * as G from './geom.js?v=20261122-2210';
+import * as W from './walls.js?v=20261122-2210';
+import * as E from './edit.js?v=20261122-2210';
+import { Doc, newProject, saveProject, loadProject, listProjects, deleteProject, migrate, uid } from './model.js?v=20261122-2210';
+import { View2D } from './view2d.js?v=20261122-2210';
+import { snap, SNAP_LABEL } from './snap.js?v=20261122-2210';
+import { makeTool } from './tools.js?v=20261122-2210';
+import { icon } from './icons.js?v=20261122-2210';
+import { symbolFootprint, columnPoly, dimGeometry, drawDim, drawSymbol, floorTiles, SYMBOLE } from './render2d.js?v=20261122-2210';
+import { CanvasPainter } from './painter.js?v=20261122-2210';
+import { renderProps, renderStoreys, renderLayers, renderProject } from './props.js?v=20261122-2210';
+import { demoProject } from './demo.js?v=20261122-2210';
+import * as Help from './help.js?v=20261122-2210';
+import { makeTool2 } from './tools2.js?v=20261122-2210';
+import { hydrateUnderlays } from './pdfimport.js?v=20261122-2210';
+import * as AB from './abstand.js?v=20261122-2210';
+import { treppe } from './treppe.js?v=20261122-2210';
+import * as F from './frei.js?v=20261122-2210';
+import * as I18N from './i18n.js?v=20261122-2210';
+import * as ML from './massleiste.js?v=20261122-2210';
 const { t } = I18N;
 
 // Zwei-Bildschirm-Modus: Bedienelemente können im Werkzeug-Fenster (zweiter Bildschirm) liegen
@@ -67,7 +67,7 @@ class App {
     this.view = new View2D(this, $('#cv'));
     this.buildTop(); this.buildToggles(); this.bindKeys(); this.bindCmd();
     this.setMode('grundriss'); this.setTool('select');
-    if (!F.FREI) import('./driveprojekt.js?v=20261122-2150').then(DP => DP.autoSichern(this)).catch(() => { });
+    if (!F.FREI) import('./driveprojekt.js?v=20261122-2210').then(DP => DP.autoSichern(this)).catch(() => { });
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); this._installEvt = e; if (F.FREI) this.buildTop(); });
     window.addEventListener('appinstalled', () => { this._installEvt = null; if (F.FREI) { this.buildTop(); this.toast('TW-CAD ist installiert – du findest es jetzt im Startmenü / auf dem Home-Bildschirm.'); } });
     $('#cmd').placeholder = this.cmdPlatzhalter();
@@ -78,10 +78,15 @@ class App {
     const sk = document.getElementById('stageKnoepfe');
     if (sk) sk.append(h('button', { class: 'neu-btn', title: 'Neuer Plan – leeres Blatt', onclick: () => this.neuerPlan(), html: icon('plus') + '<span>Neu</span>' }), h('div', { class: 'del-gruppe' }, h('button', { class: 'del-btn', title: 'Löschen (Entf)', onclick: () => this.loeschen(), html: icon('trash') + '<span>Löschen</span>' }), h('button', { class: 'schritt-btn', title: 'Letzten Schritt löschen', onclick: () => this.letzterSchritt(), html: icon('undo') + '<span>Letzter Schritt</span>' })), h('button', { class: 'stage-k', title: 'Rückgängig (Strg+Z)', onclick: () => this.undo(), html: icon('undo') }), h('button', { class: 'stage-k', title: 'Wiederholen (Strg+Y)', onclick: () => this.redo(), html: icon('redo') }));
     // Eigenschaften einklappbar (Entwurf A, 22.11.2026) – gemerkt je Gerät
-    const seiteZu = (zu) => { try { localStorage.setItem('twcad_side_zu', zu ? '1' : ''); } catch (e) { } $('#app').classList.toggle('side-zu', zu); setTimeout(() => { this.view && this.view.resize && this.view.resize(); this.redraw(); }, 30); };
-    try { if (localStorage.getItem('twcad_side_zu') === '1') $('#app').classList.add('side-zu'); } catch (e) { }
-    const sk1 = document.getElementById('sideKlapp'), sk2 = document.getElementById('sideAuf');
-    if (sk1) sk1.onclick = () => seiteZu(true); if (sk2) sk2.onclick = () => seiteZu(false);
+    // Rechte Seite wie links (Thomas 22.11.2026): schmale Leiste mit Knöpfen; Antippen klappt die Tafel daneben auf, 📌 heftet sie fest an
+    const seiteZu = (zu) => { try { localStorage.setItem('twcad_side_zu', zu ? '1' : '0'); } catch (e) { } $('#app').classList.toggle('side-zu', zu); $('#app').classList.remove('side-flug'); this.seitenLeiste(); setTimeout(() => { this.view && this.view.resize && this.view.resize(); this.redraw(); }, 30); };
+    this.seiteZu = seiteZu;
+    try { if (localStorage.getItem('twcad_side_zu') !== '0') $('#app').classList.add('side-zu'); } catch (e) { $('#app').classList.add('side-zu'); }
+    const sk1 = document.getElementById('sideKlapp'), sk3 = document.getElementById('sideAnheften');
+    if (sk1) sk1.onclick = () => { const a = $('#app'); if (a.classList.contains('m3d')) { a.classList.add('m3d-zu'); this.seitenLeiste(); setTimeout(() => this.modeView && this.modeView.resize && this.modeView.resize(), 30); return; } if (a.classList.contains('side-zu')) this.seiteFlug(false); else seiteZu(true); };
+    if (sk3) sk3.onclick = () => seiteZu(false);
+    document.addEventListener('pointerdown', (e) => { const a = $('#app'); if (!a.classList.contains('side-flug')) return; const sd = $('#side'); if (sd.contains(e.target) || e.target.closest('.modal, #modal, .mehr-menue, .objekt-fenster')) return; if (e.target.closest('#cv, #stage, .stage, canvas')) return; this.seiteFlug(false); }, true);
+    this.seitenLeiste();
     { const m = $('#main'); if (m && !document.getElementById('sideHandy')) m.append(h('button', { id: 'sideHandy', class: 'side-handy', 'data-tw': 'side-handy', onclick: () => this.handySeite() })); this.handySeite(false); }
     const zb = document.getElementById('zweiAus'), vb = document.getElementById('vollbildBtn');
     if (zb) zb.onclick = () => this.toggleZweiBildschirm(); if (vb) vb.onclick = () => this.vollbild();
@@ -186,6 +191,7 @@ class App {
       const [el, mod] = map[m]; $('#' + el).classList.remove('hidden');
       try { const M = await import(mod + new URL(import.meta.url).search); this.modeView = M.mount(this, $('#' + el)); } catch (e) { console.error(e); this.toast('Ansicht konnte nicht geladen werden: ' + e.message, true); }
     }
+    $('#app').classList.remove('side-flug'); this.seitenLeiste();
     this.renderSide(); Help.context(this.helpContext()); this.massLeiste(); this.handySeite(false);
   }
   buildToolbox() {
@@ -396,6 +402,39 @@ class App {
     return this.toolName && this.toolName !== 'select' ? this.toolName : this.mode;
   }
   /* ───── Seitenleiste ───── */
+  /** rechte Leiste: Knöpfe für die Tafeln (2D: Eigenschaften, Geschosse, Ebenen, Projekt; sonst die Tafel der Ansicht) */
+  seitenLeiste() {
+    const l = document.getElementById('sideLeiste'); if (!l) return; l.innerHTML = '';
+    const flug = $('#app').classList.contains('side-flug');
+    const liste = this.modeView && this.modeView.renderSide ? [['props', this.modeView.sideTitle || 'Einstellungen', 'props']] : [['props', 'Eigenschaften', 'props'], ['storeys', 'Geschosse', 'storeys'], ['layers', 'Ebenen', 'layers'], ['project', 'Projekt', 'folder']];
+    for (const [k, lab, ic] of liste) {
+      const b = h('button', { class: 'sl-knopf' + (flug && (this.sideTabName === k || liste.length === 1) ? ' on' : ''), 'data-tab': k, 'data-tw': 'sl-' + k, title: lab, onclick: () => { const a = $('#app'); if (a.classList.contains('m3d')) { a.classList.remove('m3d-zu'); this.seitenLeiste(); setTimeout(() => this.modeView && this.modeView.resize && this.modeView.resize(), 30); return; } if (flug && this.sideTabName === k) { this.seiteFlug(false); return; } if (liste.length > 1) this.sideTabName = k; this.seiteFlug(true); }, html: icon(ic) + `<span>${lab}</span>` });
+      if (k === 'storeys' || k === 'layers') F.profi(b); l.append(b);
+    }
+    l.append(h('div', { class: 'sl-rest' }), h('button', { class: 'sl-knopf sl-pin', 'data-tw': 'sl-pin', title: 'Fest anheften – Tafel bleibt rechts offen', onclick: () => this.seiteZu(false), html: '<b>📌</b><span>anheften</span>' }));
+  }
+  /** Tafel rechts als Klappe öffnen/schließen (nur bei eingeklappter Seite) */
+  seiteFlug(auf) {
+    const a = $('#app'); if (!a.classList.contains('side-zu') || a.classList.contains('m3d')) return;
+    a.classList.toggle('side-flug', !!auf); if (auf) this.renderSide(); this.seitenLeiste();
+  }
+  /** Räume aus den Wänden erkennen: jeder von Wänden umschlossene Bereich (ab 1 m²) ohne Raum wird ein Raum (Thomas 22.11.2026) */
+  raeumeErkennen() {
+    const doc = this.doc; const neu = [];
+    for (const st of doc.p.storeys) {
+      const geo = W.storeyGeometry(doc, st.id); const vorh = doc.all('room', st.id).filter(r => r.poly);
+      for (const poly of geo.rooms) {
+        if (G.polyArea(poly) < 1e6) continue;
+        let seed = G.polyCentroid(poly);
+        if (!G.pointInPoly(seed, poly)) { const bb = G.bbox(poly); seed = null; for (let i = 1; i < 12 && !seed; i++) for (let j = 1; j < 12 && !seed; j++) { const q = { x: bb.x0 + bb.w * i / 12, y: bb.y0 + bb.h * j / 12 }; if (G.pointInPoly(q, poly)) seed = q; } }
+        if (!seed || vorh.some(r => G.pointInPoly(seed, r.poly))) continue;
+        neu.push({ st, poly, seed });
+      }
+    }
+    if (!neu.length) return 0;
+    doc.change('Räume erkennen', () => { let n = doc.all('room').length; for (const x of neu) { n++; doc.add({ type: 'room', storey: x.st.id, seed: G.clone(x.seed), poly: x.poly, name: t('Raum'), nr: String(n).padStart(2, '0'), height: null, showDims: true, tiles: null }); } });
+    return neu.length;
+  }
   /** Handy: Eigenschaften bzw. Baukasten 3D als Schublade von rechts – ein Knopf unten rechts öffnet und schließt sie */
   handySeite(auf) {
     const sd = $('#side'), b = document.getElementById('sideHandy'); if (!sd || !b) return;
@@ -420,7 +459,7 @@ class App {
     } catch (e) { console.error(e); body.append(h('div', { class: 'note warn' }, 'Fehler: ' + e.message)); }
   }
   select(ids) { this.selection = new Set(ids); this.selChanged(); }
-  selChanged() { if (this.sideTabName !== 'props') this.sideTabName = 'props'; this.renderSide(); this.redraw(); this.updateDelBtn(); }
+  selChanged() { if (this.sideTabName !== 'props') this.sideTabName = 'props'; const a = $('#app'); if (a.classList.contains('side-zu') && !uiDoc && window.innerWidth > 760 && (this.mode === 'grundriss' || this.mode === 'lageplan')) { if (this.selection.size && this.toolName === 'select') { a.classList.add('side-flug'); this._flugAuto = true; } else if (!this.selection.size && this._flugAuto) { a.classList.remove('side-flug'); this._flugAuto = false; } this.seitenLeiste(); } this.renderSide(); this.redraw(); this.updateDelBtn(); }
   deleteSelection() {
     const ids = [...this.selection].filter(id => { const e = this.doc.byId(id); return e && !this.doc.locked(e); });
     if (this.mode === 'lageplan') { const s = this.doc.p.site; this.doc.change('Löschen', () => { s.punkte = s.punkte.filter(p => !this.selection.has(p.id)); s.nachbarn = s.nachbarn.filter(n => !this.selection.has(n.id)); if (this.selection.has('grenze')) s.grenze = null; }); }
@@ -545,7 +584,7 @@ class App {
   drawDimPreview(P, d) { drawDim(P, d, '#2563eb', { paperScale: this.massstab() }); }
   /** Objekte-Fenster (22.11.2026) */
   async objekteFenster(opt = {}) {
-    try { const M = await import('./objektwahl.js?v=20261122-2150' + new URL(import.meta.url).search); M.objektFenster(this, opt); } catch (e) { console.error(e); this.toast('Objekte-Fenster konnte nicht geladen werden: ' + e.message, true); }
+    try { const M = await import('./objektwahl.js?v=20261122-2210' + new URL(import.meta.url).search); M.objektFenster(this, opt); } catch (e) { console.error(e); this.toast('Objekte-Fenster konnte nicht geladen werden: ' + e.message, true); }
   }
   drawSymbolPreview(P, s) { drawSymbol(P, s, '#2563eb'); }
 
@@ -670,8 +709,8 @@ class App {
       if (e.key === ' ' && !inField) this.spaceDown = true;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !inField) { e.preventDefault(); this.undo(); return; }
       if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z')) && !inField) { e.preventDefault(); this.redo(); return; }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !F.FREI) { e.preventDefault(); import('./ki-plus.js?v=20261122-2150').then(K => K.befehlsLeiste(this)); return; }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's' && !F.FREI) { e.preventDefault(); import('./driveprojekt.js?v=20261122-2150').then(DP => DP.speichern(this)); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !F.FREI) { e.preventDefault(); import('./ki-plus.js?v=20261122-2210').then(K => K.befehlsLeiste(this)); return; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's' && !F.FREI) { e.preventDefault(); import('./driveprojekt.js?v=20261122-2210').then(DP => DP.speichern(this)); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); this.saveNow(true); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && !inField) { this.clip = [...this.selection]; this.toast(`${this.clip.length} Element(e) kopiert`); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && !inField && this.clip) { const n = this.doc.change('Einfügen', () => E.copyElements(this.doc, this.clip, E.moveFn({ x: 500, y: -500 }))); this.select(n.map(x => x.id)); return; }
@@ -739,7 +778,7 @@ class App {
     let geo = null; try { geo = JSON.parse(localStorage.getItem('twcad_wz_geo') || 'null'); } catch (e) { }
     const sw = window.screen; const w = geo ? geo.w : 640, hh = geo ? geo.h : (sw.availHeight || 900);
     const l = geo ? geo.l : ((sw.availLeft || 0) + (sw.availWidth || 1600) - w), t = geo ? geo.t : (sw.availTop || 0);
-    const win = window.open('werkzeuge.html?v=20261122-2150', 'twcad_werkzeuge', `popup=yes,width=${w},height=${hh},left=${l},top=${t}`);
+    const win = window.open('werkzeuge.html?v=20261122-2210', 'twcad_werkzeuge', `popup=yes,width=${w},height=${hh},left=${l},top=${t}`);
     if (!win) { this.toast('Das Werkzeug-Fenster wurde blockiert. Bitte Pop-ups für diese Seite erlauben (Symbol rechts in der Adressleiste) und nochmal klicken.', true); return; }
     this.wzOeffnet = win;
     // beim ersten Mal: auf den anderen Bildschirm schieben (fragt einmal nach „Fenster auf allen Bildschirmen verwalten“)
@@ -842,7 +881,7 @@ class App {
   /** Fliesen-Studio (großes Fliesen-Fenster) – für Raum/Fliesenfläche (sonst ausgewählter oder erster Raum) */
   async openStudio(roomId, ziel) {
     if (!roomId) { const sel = [...this.selection].map(id => this.doc.byId(id)).find(e => e && (e.type === 'room' || e.type === 'tilezone')); roomId = sel ? sel.id : (this.mode === 'fliesen' && this.modeView ? this.modeView.roomId : null); }
-    const M = await import('./fliesenstudio.js?v=20261122-2150');
+    const M = await import('./fliesenstudio.js?v=20261122-2210');
     return M.openStudio(this, { roomId, ziel, onClose: () => { if (this.mode === 'fliesen' && this.modeView && this.modeView.refresh) this.modeView.refresh(); this.redraw(); this.renderSide(); } });
   }
   /** Neuer Plan: leeres Blatt – vorher fragen, ob der jetzige Plan behalten werden soll */
@@ -851,7 +890,7 @@ class App {
     const starten = async (behalten) => {
       close && close();
       const altJson = JSON.stringify(alt.p); const altId = alt.p.id; const altName = alt.p.name;
-      if (behalten) { alt.p.name = name.value.trim() || altName; await this.saveNow(); if (!F.FREI && alt.p.meta && alt.p.meta.drive && alt.p.meta.drive.id) import('./driveprojekt.js?v=20261122-2150').then(DP => DP.speichern(this, { still: true })).catch(() => { }); }
+      if (behalten) { alt.p.name = name.value.trim() || altName; await this.saveNow(); if (!F.FREI && alt.p.meta && alt.p.meta.drive && alt.p.meta.drive.id) import('./driveprojekt.js?v=20261122-2210').then(DP => DP.speichern(this, { still: true })).catch(() => { }); }
       else { try { await deleteProject(altId); } catch (e) { } }
       const d = new Date(); const p = newProject(t('Plan') + ' ' + d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
       p.settings = Object.assign(p.settings, JSON.parse(JSON.stringify(alt.p.settings || {}))); p.meta.planer = (alt.p.meta && alt.p.meta.planer) || p.meta.planer;
@@ -879,8 +918,8 @@ class App {
       h('button', { class: 'btn', onclick: async () => { await this.saveNow(); this.setDoc(new Doc(demoProject())); this.refreshTitle(); this.setMode('grundriss'); close(); } }, 'Beispielprojekt laden'),
       h('button', { class: 'btn', onclick: () => { close(); this.openFile(); } }, 'Datei öffnen (.twcad)'),
       h('button', { class: 'btn', onclick: () => this.downloadProject() }, 'Aktuelles Projekt als Datei sichern'),
-      h('button', { class: 'btn', onclick: async () => { close(); const X = await import('./dxfimport.js?v=20261122-2150'); X.openDxfImport(this); } }, 'DXF-Zeichnung importieren')));
-    if (!F.FREI) { const DP = await import('./driveprojekt.js?v=20261122-2150'); body.append(DP.abschnitt(this, () => close())); }
+      h('button', { class: 'btn', onclick: async () => { close(); const X = await import('./dxfimport.js?v=20261122-2210'); X.openDxfImport(this); } }, 'DXF-Zeichnung importieren')));
+    if (!F.FREI) { const DP = await import('./driveprojekt.js?v=20261122-2210'); body.append(DP.abschnitt(this, () => close())); }
     else body.append(h('div', { class: 'note' }, h('b', {}, 'Wichtig: '), 'Deine Projekte liegen nur in diesem Browser auf diesem Gerät. Sichere sie regelmäßig mit „Aktuelles Projekt als Datei sichern“ (.twcad-Datei, z. B. auf USB-Stick oder in deine Cloud) – mit „Datei öffnen“ holst du sie zurück, auch auf einem anderen Gerät.'));
     if (F.FREI) body.append(h('div', { class: 'sec' }, h('h4', {}, 'TW-CAD als App'), this.installStatus() === 'installiert' ? h('div', { class: 'muted' }, 'Läuft als installierte App – funktioniert auch ohne Internet (nur die Hilfe-Videos brauchen Internet).') : h('button', { class: 'btn', onclick: () => { close(); this.installieren(); } }, '⬇ Als App installieren (Startmenü/Desktop bzw. Home-Bildschirm, offline nutzbar)')));
     else body.append(h('div', { class: 'sec' }, h('h4', {}, 'TW-CAD als App'), matchMedia('(display-mode: standalone)').matches ? h('div', { class: 'muted' }, 'Läuft als installierte App – funktioniert auch ohne Internet (KI, Drive und Hilfe-Videos brauchen Internet).') :
@@ -894,17 +933,17 @@ class App {
     const close = this.modal('Projekte', body);
   }
   async importDialog() {
-    if (F.FREI) { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261122-2150'); X.openDxfImport(this, f); } else { const M = await import('./pdfimport.js?v=20261122-2150'); M.openImport(this, { file: f }); } return; }
-    const M = await import('./pdfimport.js?v=20261122-2150'); const P = await import('./planwahl.js?v=20261122-2150');
-    P.openPlanwahl(this, { titel: 'Plan aus der Baustelle', onWahl: (f, page, d, b) => { this.linkBaustelle(b); M.openImport(this, { file: f, page }); }, onEigeneDatei: async () => { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf,.dwg'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261122-2150'); X.openDxfImport(this, f); } else M.openImport(this, { file: f }); } });
+    if (F.FREI) { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261122-2210'); X.openDxfImport(this, f); } else { const M = await import('./pdfimport.js?v=20261122-2210'); M.openImport(this, { file: f }); } return; }
+    const M = await import('./pdfimport.js?v=20261122-2210'); const P = await import('./planwahl.js?v=20261122-2210');
+    P.openPlanwahl(this, { titel: 'Plan aus der Baustelle', onWahl: (f, page, d, b) => { this.linkBaustelle(b); M.openImport(this, { file: f, page }); }, onEigeneDatei: async () => { const f = await this.pickFile('.pdf,.png,.jpg,.jpeg,.dxf,.dwg'); if (!f) return; if (/\.(dxf|dwg)$/i.test(f.name)) { const X = await import('./dxfimport.js?v=20261122-2210'); X.openDxfImport(this, f); } else M.openImport(this, { file: f }); } });
   }
   /** Offline-Fähigkeit: Service Worker registrieren und alle Programmdateien vorab speichern */
   async offlineEinrichten() {
     try {
       const reg = await navigator.serviceWorker.register('sw.js', { scope: './' }); await navigator.serviceWorker.ready;
       const v = new URL(import.meta.url).searchParams.get('v') || '';
-      const mods = ['view3d', 'view3d-plus', 'listen', 'auswertung', 'tileplan', 'fliesenstudio', 'section', 'print', 'pdfimport', 'planwahl', 'ai', 'dxfimport', 'driveprojekt', 'ifc', 'ki-plus', 'sonne', 'frei', 'objekte3d', 'tools2', 'aufbau', 'help', 'help-data', 'fliesenkatalog', 'katalog', 'material-db', 'matpicker', 'textures', 'terrain', 'roof', 'treppe', 'site', 'dxf', 'pdfvec', 'demo', 'bauteile', 'objektwahl', 'baukasten3d', 'abstand', 'tilecalc', 'tiles', 'i18n', ...I18N.SPRACHEN.filter(([c]) => c !== 'de').map(([c]) => 'lang/' + c)].map(m => `js/${m}.js?v=20261122-2150${v}`);
-      const urls = [...new Set([...performance.getEntriesByType('resource').map(e => e.name).filter(u => u.startsWith(location.origin) && !u.includes('/hilfe/videos/')), ...mods.map(m => new URL(m, location.href).href), new URL('lib/GLTFExporter.js?v=20261122-2150' + v, location.href).href, new URL('lib/OBJExporter.js?v=20261122-2150' + v, location.href).href, new URL('lib/pdf.worker.min.js', location.href).href, new URL('lib/three.module.min.js', location.href).href, new URL('lib/fonts/DejaVuSansCondensed.ttf', location.href).href, new URL('lib/fonts/DejaVuSansCondensed-Bold.ttf', location.href).href, new URL('lib/OrbitControls.js?v=20261122-2150' + v, location.href).href, location.href.split('#')[0]])];
+      const mods = ['view3d', 'view3d-plus', 'listen', 'auswertung', 'tileplan', 'fliesenstudio', 'section', 'print', 'pdfimport', 'planwahl', 'ai', 'dxfimport', 'driveprojekt', 'ifc', 'ki-plus', 'sonne', 'frei', 'objekte3d', 'tools2', 'aufbau', 'help', 'help-data', 'fliesenkatalog', 'katalog', 'material-db', 'matpicker', 'textures', 'terrain', 'roof', 'treppe', 'site', 'dxf', 'pdfvec', 'demo', 'bauteile', 'objektwahl', 'baukasten3d', 'abstand', 'tilecalc', 'tiles', 'i18n', ...I18N.SPRACHEN.filter(([c]) => c !== 'de').map(([c]) => 'lang/' + c)].map(m => `js/${m}.js?v=20261122-2210${v}`);
+      const urls = [...new Set([...performance.getEntriesByType('resource').map(e => e.name).filter(u => u.startsWith(location.origin) && !u.includes('/hilfe/videos/')), ...mods.map(m => new URL(m, location.href).href), new URL('lib/GLTFExporter.js?v=20261122-2210' + v, location.href).href, new URL('lib/OBJExporter.js?v=20261122-2210' + v, location.href).href, new URL('lib/pdf.worker.min.js', location.href).href, new URL('lib/three.module.min.js', location.href).href, new URL('lib/fonts/DejaVuSansCondensed.ttf', location.href).href, new URL('lib/fonts/DejaVuSansCondensed-Bold.ttf', location.href).href, new URL('lib/OrbitControls.js?v=20261122-2210' + v, location.href).href, location.href.split('#')[0]])];
       (reg.active || navigator.serviceWorker.controller)?.postMessage({ typ: 'vorladen', urls: F.FREI ? urls.filter(u => !/\/js\/(ai|ki-plus|drive|driveprojekt|planwahl)\.js/.test(u)) : urls, v });
       // Updates: regelmäßig nach einer neuen Fassung sehen (Service Worker + Programmstempel in index.html)
       // Hinweis zeigt lib/tw-version.js (vergleicht <meta name="tw-version">); der alte Stempel-Vergleich nur noch als Ersatz, falls der Baustein fehlt
@@ -918,7 +957,7 @@ class App {
     if (!v || this._updateDa) return;
     try {
       const r = await fetch('index.html', { cache: 'no-store' }); if (!r.ok) return; const t = await r.text();
-      const m = /js\/app\.js\?v=20261122-2150([^"'&]+)/.exec(t); if (m && m[1] !== v) this.updateHinweis();
+      const m = /js\/app\.js\?v=20261122-2210([^"'&]+)/.exec(t); if (m && m[1] !== v) this.updateHinweis();
     } catch (e) { }
   }
   updateHinweis() {
@@ -1008,7 +1047,7 @@ class App {
     this.doc.change('Baustelle zugeordnet', () => { m.baustelle = { id: b.id, name: b.name }; if (!m.bauvorhaben) m.bauvorhaben = b.name; });
     this.toast('Projekt der Baustelle „' + b.name + '“ zugeordnet'); this.renderSide();
   }
-  async aiDialog() { if (F.FREI) return; const M = await import('./ai.js?v=20261122-2150'); M.openAI(this); }
+  async aiDialog() { if (F.FREI) return; const M = await import('./ai.js?v=20261122-2210'); M.openAI(this); }
   settingsDialog() {
     const S = this.doc.p.settings; const body = h('div', { class: 'grid2' });
     const f = (label, key, type = 'number') => { const i = h('input', { type, value: S[key] ?? '' }); i.onchange = () => { S[key] = type === 'number' ? +i.value : i.value; this.redraw(); }; return h('div', { class: 'row' }, h('label', {}, label), i); };

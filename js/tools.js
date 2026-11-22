@@ -1,16 +1,16 @@
 // TW-CAD – Werkzeuge
-import * as G from './geom.js?v=20261122-2150';
-import * as AB from './aufbau.js?v=20261122-2150';
-import * as W from './walls.js?v=20261122-2150';
-import * as E from './edit.js?v=20261122-2150';
-import { uid } from './model.js?v=20261122-2150';
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-2150';
-import { defaultTileCfg } from './tiles.js?v=20261122-2150';
-import * as K from './katalog.js?v=20261122-2150';
-import * as B from './bauteile.js?v=20261122-2150';
-import * as T from './treppe.js?v=20261122-2150';
-import { t } from './i18n.js?v=20261122-2150';
-import { laengenSchritt } from './snap.js?v=20261122-2150';
+import * as G from './geom.js?v=20261122-2210';
+import * as AB from './aufbau.js?v=20261122-2210';
+import * as W from './walls.js?v=20261122-2210';
+import * as E from './edit.js?v=20261122-2210';
+import { uid } from './model.js?v=20261122-2210';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, symbolFootprint, columnPoly, dimGeometry, PEN, floorTiles } from './render2d.js?v=20261122-2210';
+import { defaultTileCfg } from './tiles.js?v=20261122-2210';
+import * as K from './katalog.js?v=20261122-2210';
+import * as B from './bauteile.js?v=20261122-2210';
+import * as T from './treppe.js?v=20261122-2210';
+import { t } from './i18n.js?v=20261122-2210';
+import { laengenSchritt } from './snap.js?v=20261122-2210';
 
 const SEL = '#2563eb';
 const HART = new Set(['end', 'ecke', 'schnitt', 'mitte', 'zentrum', 'lot', 'spur', 'abstand']);

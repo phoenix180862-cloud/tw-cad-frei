@@ -1,10 +1,10 @@
 // TW-CAD – 2D-Ansicht: Zoom, Verschieben, Raster, Ereignisse
-import * as G from './geom.js?v=20261122-2150';
-import { CanvasPainter } from './painter.js?v=20261122-2150';
-import { drawPlan } from './render2d.js?v=20261122-2150';
-import { drawSite } from './site.js?v=20261122-2150';
-import { gridStep } from './snap.js?v=20261122-2150';
-import { tr } from './i18n.js?v=20261122-2150';
+import * as G from './geom.js?v=20261122-2210';
+import { CanvasPainter } from './painter.js?v=20261122-2210';
+import { drawPlan } from './render2d.js?v=20261122-2210';
+import { drawSite } from './site.js?v=20261122-2210';
+import { gridStep } from './snap.js?v=20261122-2210';
+import { tr } from './i18n.js?v=20261122-2210';
 
 export class View2D {
   constructor(app, canvas) {
