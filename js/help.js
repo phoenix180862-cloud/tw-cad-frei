@@ -1,5 +1,5 @@
 // TW-CAD – Hilfe: kleines eigenes Fenster (zweiter Bildschirm) oder schwebend, folgt dem Arbeitsschritt
-import { HILFE_FUER } from './help-data.js?v=20261122-2110';
+import { HILFE_FUER } from './help-data.js?v=20261122-2125';
 
 let kanal = null, fenster = null, floatEl = null, letzter = 'start';
 export function init(app) {

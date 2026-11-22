@@ -653,3 +653,66 @@ body.no2d .masz-leiste, #app.no2d .masz-leiste { display: none; }
 #toggles .vollbild-btn { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; margin-left: 8px; border: 1px solid var(--line2); border-radius: 6px; background: transparent; color: var(--tx2); font-size: 11.5px; font-weight: 600; cursor: pointer; }
 #toggles .vollbild-btn svg { width: 15px; height: 15px; }
 #toggles .vollbild-btn:hover, #toggles .vollbild-btn.on { color: #fff; border-color: var(--acc); }
+
+/* ═════ Entwurf A „Werkzeugkoffer“ (Thomas 22.11.2026) ═════ */
+#main { position: relative; }
+#app:not(.zwei) #main { grid-template-columns: 88px 1fr 300px; }
+#app:not(.zwei).no2d #main { grid-template-columns: 1fr 320px; }
+#app:not(.zwei).side-zu #main { grid-template-columns: 88px 1fr 34px; }
+#app:not(.zwei).side-zu.no2d #main { grid-template-columns: 1fr 34px; }
+.toolbox.koffer-leiste { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 7px; overflow-y: auto; }
+.toolbox.koffer-leiste .tool.koffer-auswahl { --gc: #e5e7eb; min-height: 62px; font-size: 11.5px; }
+.koffer { --gc: #93c5fd; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 70px; padding: 6px 2px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--gc) 30%, transparent); background: color-mix(in srgb, var(--gc) 8%, transparent); color: #eef1f5; font: 700 11px/1.15 var(--font); text-align: center; cursor: pointer; touch-action: manipulation; }
+.koffer svg { width: 25px; height: 25px; color: var(--gc); }
+.koffer:hover { background: color-mix(in srgb, var(--gc) 22%, transparent); border-color: var(--gc); }
+.koffer.offen { background: color-mix(in srgb, var(--gc) 26%, var(--bg2)); border: 2px solid var(--gc); }
+.koffer.aktiv { box-shadow: inset 3px 0 0 var(--gc); }
+.koffer .kf-akt { font-size: 10px; font-weight: 600; color: var(--gc); min-height: 0; }
+.koffer .kf-akt:empty { display: none; }
+.koffer-flyout { --gc: #93c5fd; position: absolute; left: 94px; top: 8px; z-index: 60; width: 384px; max-width: calc(100vw - 110px); max-height: calc(100% - 16px); overflow-y: auto; background: var(--bg2); border: 2px solid var(--gc); border-radius: 12px; padding: 10px 12px 12px; box-shadow: 0 12px 34px rgba(0,0,0,.5); }
+.kf-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.kf-kopf b { flex: 1; color: var(--gc); font-size: 13px; letter-spacing: .5px; text-transform: uppercase; }
+.kf-pin, .kf-zu { min-height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line2); background: transparent; color: var(--tx2); font: 600 12px var(--font); cursor: pointer; }
+.kf-pin.on { background: var(--gc); color: #111; border-color: var(--gc); }
+.kf-gitter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.koffer-flyout .tool { --gc: inherit; min-height: 66px; font-size: 12px; font-weight: 600; color: #eef1f5; background: var(--bg); border: 1px solid var(--line2); border-radius: 9px; position: relative; justify-content: center; }
+.koffer-flyout .tool svg { width: 25px; height: 25px; color: var(--gc); }
+.koffer-flyout .tool span { max-width: 110px; }
+.koffer-flyout .tool:hover { border-color: var(--gc); background: color-mix(in srgb, var(--gc) 16%, var(--bg)); }
+.koffer-flyout .tool.on { background: var(--gc); color: #111; border-color: var(--gc); }
+.koffer-flyout .tool.on svg { color: #111; }
+.koffer-flyout .tool kbd { position: absolute; top: 3px; right: 5px; font: 700 9px var(--font); color: var(--gc); }
+.koffer-flyout .tool.on kbd { color: #111; }
+/* Eigenschaften einklappen */
+@media (min-width: 761px) { .side { position: relative; } }
+.side-klapp { position: absolute; top: 4px; right: 4px; z-index: 3; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line2); background: var(--bg2); color: var(--tx2); cursor: pointer; font-size: 13px; }
+.side-klapp:hover { color: #fff; border-color: var(--acc); }
+.side-auf { display: none; }
+@media (min-width: 761px) { #app.side-zu:not(.zwei) .side > *:not(.side-auf) { display: none !important; } }
+@media (min-width: 761px) { #app.side-zu:not(.zwei) .side-auf { display: flex; } }
+#app.side-zu:not(.zwei) .side-auf { align-items: center; justify-content: center; width: 100%; height: 100%; border: 0; background: var(--bg2); color: var(--tx2); cursor: pointer; font: 700 12px var(--font); }
+#app.side-zu:not(.zwei) .side-auf span { writing-mode: vertical-rl; letter-spacing: .5px; }
+#app.side-zu:not(.zwei) .side-auf:hover { color: #fff; }
+.side-tabs { padding-right: 42px; }
+/* Menü „Mehr“ */
+.mehr-btn { display: inline-flex; align-items: center; gap: 6px; }
+.mehr-menue { position: fixed; z-index: 9000; min-width: 290px; background: var(--bg2); border: 1px solid var(--line2); border-radius: 12px; padding: 6px; box-shadow: 0 14px 36px rgba(0,0,0,.5); display: flex; flex-direction: column; }
+.mm-z { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--tx); font: 600 13.5px var(--font); text-align: left; cursor: pointer; }
+.mm-z svg, .mm-leer { width: 18px; height: 18px; flex: none; color: var(--tx2); }
+.mm-z:hover { background: var(--bg3); }
+.mm-z.on { color: #fff; background: #1e3a64; }
+.mm-trenn { height: 1px; background: var(--line); margin: 6px 4px; }
+.mm-titel { font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--tx3); padding: 4px 12px; }
+/* Tablet */
+@media (min-width: 761px) and (max-width: 1250px) { #app:not(.zwei) #main { grid-template-columns: 80px 1fr 260px; } #app:not(.zwei).side-zu #main { grid-template-columns: 80px 1fr 34px; } .koffer-flyout { left: 86px; } }
+/* Handy */
+@media (max-width: 760px) {
+  #app:not(.zwei) #main, #app:not(.zwei).side-zu #main { grid-template-columns: 66px 1fr; }
+  #app:not(.zwei).no2d #main, #app:not(.zwei).side-zu.no2d #main { grid-template-columns: 1fr; }
+  .koffer { min-height: 58px; font-size: 9.5px; } .koffer svg { width: 21px; height: 21px; }
+  .koffer-flyout { left: 70px; width: calc(100vw - 78px); }
+  .kf-gitter { grid-template-columns: repeat(2, 1fr); }
+  .side-klapp, .side-auf { display: none !important; }
+}
+.mehr-menue { max-height: calc(100vh - 70px); overflow-y: auto; }
+@media (max-width: 1250px) { #topActions .stufe-seg { display: none; } }

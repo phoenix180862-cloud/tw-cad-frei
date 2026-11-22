@@ -76,6 +76,8 @@ const P = {
   storeys: 'M3 20h18 M3 14h18 M3 8h18 M6 20V8 M18 20V8',
   props: 'M4 6h10 M18 6h2 M4 12h4 M12 12h8 M4 18h12 M20 18h0',
   fit: 'M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5',
+  koffer: 'M3 8h18v12H3z M9 8V5h6v3 M3 13h18 M11 12h2v2h-2z',
+  mehr: 'M4 6h16 M4 12h16 M4 18h16',
   vollbild: 'M3 9V3h6 M3 3l6 6 M15 3h6v6 M21 3l-6 6 M21 15v6h-6 M21 21l-6-6 M9 21H3v-6 M3 21l6-6',
   vollbildaus: 'M9 3v6H3 M9 9L3 3 M15 3v6h6 M15 9l6-6 M15 21v-6h6 M15 15l6 6 M9 21v-6H3 M9 15l-6 6',
   sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
