@@ -1,11 +1,11 @@
 // TW-CAD – IFC4-Export (Reference View): Geschosse, Wände mit Schichten, Öffnungen, Türen, Fenster, Decken, Räume, Stützen, Unterzüge, Körper, Dach
-import * as G from './geom.js?v=20261123-0645';
-import * as W from './walls.js?v=20261123-0645';
-import * as AB from './aufbau.js?v=20261123-0645';
-import { columnPoly } from './render2d.js?v=20261123-0645';
-import { buildRoof } from './roof.js?v=20261123-0645';
-import { FREI } from './frei.js?v=20261123-0645';
-import { FIRMA } from './firma.js?v=20261123-0645';
+import * as G from './geom.js?v=20261123-0745';
+import * as W from './walls.js?v=20261123-0745';
+import * as AB from './aufbau.js?v=20261123-0745';
+import { columnPoly } from './render2d.js?v=20261123-0745';
+import { buildRoof } from './roof.js?v=20261123-0745';
+import { FREI } from './frei.js?v=20261123-0745';
+import { FIRMA } from './firma.js?v=20261123-0745';
 
 const B64 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$';
 export function ifcGuid() {

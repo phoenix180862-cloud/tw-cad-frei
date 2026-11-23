@@ -2,16 +2,16 @@
 //   links  „① Wohin?“     Boden, Randfries, alle Wände, jede Wand einzeln, Wand oben (2. Fliese), Bordüre/Fries, Sockel
 //   Mitte  Vorschau (Verlegeplan/Kundenansicht, Startpunkt ziehen) + „② Welche Fliese?“ (Projekt · LV · Katalog · Eigene)
 //   rechts „③ Wie verlegen?“  Verband, Richtung, Startpunkt, Fugen, Höhen, Kanten/Kleber, Mengen & Kosten, Übertragen
-import * as G from './geom.js?v=20261123-0645';
-import * as T from './tiles.js?v=20261123-0645';
-import * as K from './fliesenkatalog.js?v=20261123-0645';
-import { wallSurfaces, wallTilePlan, tileSummary, raumBauteile, bauteilSeiten, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261123-0645';
-import { floorTiles, zoneTiles } from './render2d.js?v=20261123-0645';
-import * as W from './walls.js?v=20261123-0645';
-import { TILE_TEXTUREN, tileSurface } from './textures.js?v=20261123-0645';
-import { mount as mountPlan, shrinkImage } from './tileplan.js?v=20261123-0645';
-import { uid } from './model.js?v=20261123-0645';
-import { FREI, einstieg } from './frei.js?v=20261123-0645';
+import * as G from './geom.js?v=20261123-0745';
+import * as T from './tiles.js?v=20261123-0745';
+import * as K from './fliesenkatalog.js?v=20261123-0745';
+import { wallSurfaces, wallTilePlan, tileSummary, raumBauteile, bauteilSeiten, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261123-0745';
+import { floorTiles, zoneTiles, symbolFootprint, SYMBOLE } from './render2d.js?v=20261123-0745';
+import * as W from './walls.js?v=20261123-0745';
+import { TILE_TEXTUREN, tileSurface } from './textures.js?v=20261123-0745';
+import { mount as mountPlan, shrinkImage } from './tileplan.js?v=20261123-0745';
+import { uid } from './model.js?v=20261123-0745';
+import { FREI, einstieg } from './frei.js?v=20261123-0745';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (k === 'style') e.style.cssText = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null && c !== false) ap(e, c.nodeType ? c : document.createTextNode(c)); return e; };
 const zahl = (v, d = 2) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',');
@@ -39,6 +39,7 @@ const OPTIK = [
   ['becken', 'Schwimmbad', ['schwimmbad'], f => ['weiß matt', 'Beckenblau', 'hellblau', 'türkis', 'dunkelblau', 'hellgrau', 'grau', 'anthrazit'].includes(f[0])],
   ['aussen', 'Außen 2 cm', ['aussen'], f => f[3] === 'beton' || ['Travertin', 'Schiefer', 'grau', 'anthrazit', 'sand', 'greige'].includes(f[0]), 'beton'],
 ];
+const DUSCHEN = ['dusche', 'walkin', 'reihendusche', 'duschtasse', 'duschviertel'];
 const SCHRITTE = [[1, 'Raum'], [2, 'Fliese'], [3, 'Verlegung'], [4, 'Wände'], [5, 'Dusche & Abdichtung'], [6, 'Mengen & Plan']];
 const TEIL = { 'Verlegemuster & Richtung': 'verlegung', 'Startpunkt (Fugenkreuz)': 'verlegung', 'Fugen': 'verlegung', 'Kanten, Verlegeart & Kleber': 'verlegung', 'Höhe & Fugenlage Wände': 'waende', 'Höhe & Fugenlage dieser Wand': 'waende', 'Zweiteilung': 'waende', 'Bordüre / Fries': 'flaeche', 'Mengen & Kosten (Raum)': 'mengen', 'Übertragen & Entfernen': 'mengen' };
 export function istOffen() { return !!offen; }
@@ -183,7 +184,7 @@ class Studio {
     if (!this.room && this.app.raeumeErkennen) { const n = this.app.raeumeErkennen(); if (n) { const r0 = this.rooms()[0]; if (r0) this.roomId = r0.id; this.app.toast(n === 1 ? 'Ein Raum aus den Wänden erkannt.' : `${n} Räume aus den Wänden erkannt.`); } }
     if (!this.room) { this.kopfBauen(); this.links.innerHTML = ''; ap(this.links, h('div', { class: 'note' }, 'Noch kein Raum: Die Wände umschließen noch keinen Bereich. Wandecken im Grundriss schließen (Wand an Wand ansetzen) – dann erkennt das Fliesen-Studio den Raum von selbst.')); this.rechts.innerHTML = ''; this.wahl.innerHTML = ''; return; }
     const psc = this.panel.scrollTop;
-    this.kopfBauen(); this.linksBauen(); this.wahlBauen(); this.rechtsBauen(); this.vorschauBauen(); this.schrittBauen();
+    this.kopfBauen(); this.linksBauen(); this.wahlBauen(); this.rechtsBauen(); this.vorschauBauen(); this.schrittBauen(); this.vorschauExtra();
     requestAnimationFrame(() => { this.panel.scrollTop = psc; });
   }
   kopfBauen() {
@@ -197,7 +198,7 @@ class Studio {
       h('button', { class: 'btn sm', onclick: () => this.materialliste() }, '📋 Materialliste'),
       h('button', { class: 'btn sm', onclick: () => this.pdf() }, '📄 Verlegeplan PDF'),
       !this.istZone() ? h('button', { class: 'btn sm', title: 'Raum in 3D von innen ansehen – Boden, Wände, Vorwände', onclick: async () => { const id = this.roomId; const app = this.app; this.schliessen(); await app.setMode('3d'); for (let i = 0; i < 40 && !(app.modeView && app.modeView.raumInnen); i++) await new Promise(r => setTimeout(r, 100)); setTimeout(() => app.modeView && app.modeView.raumInnen && app.modeView.raumInnen(id), 300); } }, '🧊 3D von innen') : null,
-      h('button', { class: 'ib help', title: 'Hilfe zum Fliesen-Studio', onclick: () => import('./help.js?v=20261123-0645').then(H => H.open('fliesenstudio')) }, '?'),
+      h('button', { class: 'ib help', title: 'Hilfe zum Fliesen-Studio', onclick: () => import('./help.js?v=20261123-0745').then(H => H.open('fliesenstudio')) }, '?'),
       h('button', { class: 'btn', 'data-fs': 'fertig', onclick: () => this.schliessen() }, '✓ Fertig'));
   }
   /* ── links: Wohin? ── */
@@ -264,6 +265,14 @@ class Studio {
       this.planNeu = false;
     } else {
       const neuFl = this.plan.flaeche !== fl; this.plan.flaeche = fl; this.plan.mode = this.mode; this.plan.hervor = this.hervor(); this.plan.refresh(); if (neuFl) this.plan.fit();
+    }
+  }
+  vorschauExtra() {
+    const ov = this.vorschau.querySelector('.fs-abd-bild'); if (ov) ov.remove();
+    if (this.plan) { const zw = this.schritt === 4 && this.ziel.startsWith('wand:') ? +this.ziel.slice(5) : null; if (this.plan.zoomWand !== zw) { this.plan.zoomWand = zw; setTimeout(() => this.plan && this.plan.fit(), 30); } }
+    if (this.schritt === 5 && this.room && !this.istZone()) {
+      const box = h('div', { class: 'fs-abd-bild', 'data-tw': 'abd-bild' }); const cv = h('canvas', {}); ap(box, cv); ap(this.vorschau, box);
+      requestAnimationFrame(() => { try { abdBild(cv, this.room, this.abdRechnen()); } catch (e) { console.error(e); } });
     }
   }
   hervor() { const z = this.ziel; if (z.startsWith('wand:')) return { wand: +z.slice(5) }; if (z.startsWith('bt:')) return { bt: z.slice(3) }; return null; }
@@ -399,7 +408,7 @@ class Studio {
     };
     const internet = async () => {
       const t = { id: uid('t'), name: 'Fliese aus Internet', L: 600, B: 300, fuge: 2, farbe: '#d9d4cc', textur: 'uni', quelle: 'internet', bereich: ['boden', 'rand'].includes(this.ziel) ? 'boden' : 'wand' };
-      const M = await import('./ai.js?v=20261123-0645');
+      const M = await import('./ai.js?v=20261123-0745');
       M.searchTile(this.app, t, () => { if (t.hersteller || t.artikel) t.name = [t.hersteller, t.artikel].filter(Boolean).join(' '); this.ch('Fliese aus Internet', () => this.doc.p.tileLib.push(t), false); this.zuweisen(t); });
     };
     ap(liste, 
@@ -431,7 +440,7 @@ class Studio {
       h('div', { class: 'fs-eg' }, inp('farbname', 'Farbname'), inp('farbe', 'Farbe', 'color'), inp('farbe2', 'Zweitfarbe / Äderung', 'color'), sel('textur', 'Optik', [...Object.entries(TILE_TEXTUREN), ['bild', 'Foto der Fliese']]), inp('fugeFarbe', 'Fugenfarbe (Vorschlag)', 'color')),
       h('div', { class: 'fs-eg' }, inp('preisM2', 'Preis €/m² (netto)', 'number', 0.01), inp('paketM2', 'm² je Paket', 'number', 0.01), inp('stkPaket', 'Stück je Paket', 'number', 1), inp('pos', 'LV-Position'), inp('notiz', 'Notiz')),
       h('div', { class: 'fs-zeile wrap' }, h('button', { class: 'btn sm', onclick: () => file.click() }, '📷 Foto hochladen'), t.bildData ? h('button', { class: 'btn sm', onclick: () => this.libAendern(t, x => { x.bildData = null; if (x.textur === 'bild') x.textur = 'uni'; }) }, 'Foto entfernen') : null,
-        FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261123-0645'); const tmp = clone(t); M.searchTile(this.app, tmp, () => this.libAendern(t, (x) => { for (const k of ['hersteller', 'artikel', 'farbe', 'farbe2', 'textur', 'L', 'B', 'bildData', 'quelle']) if (tmp[k] !== undefined) x[k] = tmp[k]; if (tmp.artikel && !x.serie) x.serie = tmp.artikel; })); } }, '🔎 Optik im Internet suchen (KI)'),
+        FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261123-0745'); const tmp = clone(t); M.searchTile(this.app, tmp, () => this.libAendern(t, (x) => { for (const k of ['hersteller', 'artikel', 'farbe', 'farbe2', 'textur', 'L', 'B', 'bildData', 'quelle']) if (tmp[k] !== undefined) x[k] = tmp[k]; if (tmp.artikel && !x.serie) x.serie = tmp.artikel; })); } }, '🔎 Optik im Internet suchen (KI)'),
         t.link ? h('a', { href: t.link, target: '_blank', class: 'btn sm' }, '↗ Produktseite') : null, file),
       t.lvText ? h('details', {}, h('summary', {}, 'LV-Text'), h('div', { class: 'muted', style: 'white-space:pre-wrap;font-size:11.5px' }, t.lvText)) : null,
       h('div', { class: 'muted' }, 'Änderungen gelten sofort in allen Räumen, die diese Fliese verwenden.'));
@@ -447,7 +456,7 @@ class Studio {
       2: [fb || fw, fb || fw ? [fb ? 'Boden ✓' : '', fw ? 'Wand ✓' : ''].filter(Boolean).join(' · ') : 'Boden, Wand, Sockel'],
       3: [fb || fw, fb ? (K.VERBAENDE || []).length ? 'Muster, Start, Fuge' : 'Muster, Start, Fuge' : 'Muster, Start, Fuge'],
       4: [fw, fw ? (this.cfg('wand').hoehe === 'tuer' ? 'bis Türhöhe' : this.cfg('wand').hoehe > 0 ? `bis ${G.fmtCm(this.cfg('wand').hoehe)} cm` : 'raumhoch') : 'jede Wand einzeln'],
-      5: [false, 'Gefälle, DIN 18534'],
+      5: (() => { const ab = this.room && this.room.abdichtung; if (!ab) return [false, 'Gefälle, DIN 18534']; return [true, [{ punkt: 'Punktablauf', rinne: 'Rinne', wand: 'Wandablauf', keine: 'ohne Ablauf' }[ab.ablauf] || '', ab.ablauf !== 'keine' ? zahl(ab.gefaelle, 1) + ' %' : '', ab.klDusche].filter(Boolean).join(' · ')]; })(),
       6: [false, 'Material, Plan als PDF'] };
   }
   schrittWahl(n) {
@@ -480,14 +489,127 @@ class Studio {
       ap(P, zielChips(zone ? flaechen : flaechen.filter(([z]) => z === 'boden' || z === 'wand' || this.aktiv(z))), this.rechts);
     } else if (n === 4) {
       if (zone) ap(P, h('div', { class: 'note' }, 'Eine Fliesenfläche hat keine Wände – Wände gibt es bei Räumen.'));
-      else ap(P, h('div', { class: 'muted' }, 'Wand antippen – dann eigene Höhe, eigene Fliese oder Verlegung nur für diese Wand. Die Vorschau zeigt die Wandabwicklung.'), this.links, this.rechts);
+      else ap(P, h('div', { class: 'muted' }, 'Wand antippen – dann eigene Höhe, eigene Fliese oder Verlegung nur für diese Wand. Die Vorschau zeigt die Wandabwicklung, eine angetippte Wand groß.'), this.links, this.wandBauteile(), this.rechts);
     } else if (n === 5) {
-      ap(P, h('div', { class: 'note' }, 'Dieser Schritt ist in Arbeit und kommt als Nächstes: Ablauf (Punktablauf, Rinne, Wandablauf), Gefälle mit Höhenunterschied, Abdichtung nach DIN 18534 (W0-I bis W3-I) mit Dichtband, Ecken und Manschetten, Bewegungsfugen.'));
+      if (zone) ap(P, h('div', { class: 'note' }, 'Dusche und Abdichtung plant man in einem Raum – eine Fliesenfläche hat keine Wände.'));
+      else this.abdPanel(P);
     } else if (n === 6) {
       ap(P, h('div', { class: 'fs-zeile wrap' }, h('button', { class: 'btn', onclick: () => this.materialliste() }, '📋 Materialliste'), h('button', { class: 'btn', onclick: () => this.pdf() }, '📄 Verlegeplan PDF')), this.rechts);
+      if (!zone && this.room.abdichtung) { const R = this.abdRechnen(); ap(P, h('div', { class: 'karte fs-abd-k', 'data-tw': 'abd-mengen6' }, h('b', {}, 'Abdichtung und Dusche (aus Schritt 5)'), h('div', { class: 'fs-abd-z' }, h('span', {}, 'Abdichtung gesamt'), h('b', {}, m2((R.tasse ? 0 : R.Ad) + R.Adw + R.Arb + R.Ahz))), h('div', { class: 'fs-abd-z' }, h('span', {}, 'Dichtband'), h('b', {}, zahl(R.band / 1000, 1) + ' m')), h('div', { class: 'fs-abd-z' }, h('span', {}, 'Dichtecken innen / außen · Manschetten Boden / Wand'), h('b', {}, `${R.eI} / ${R.eA} · ${R.manB} / ${R.a.manW}`)), R.bodengleich && R.a.ablauf === 'rinne' ? h('div', { class: 'fs-abd-z' }, h('span', {}, 'Duschrinne'), h('b', {}, G.fmtCm(R.a.rinneL) + ' cm')) : null)); }
     }
     const vor = n < 6 ? h('button', { class: 'btn pri fs-weiter', 'data-tw': 'fs-weiter', onclick: () => this.schrittWahl(n + 1) }, `Weiter: ${SCHRITTE[n][1]} ▶`) : h('button', { class: 'btn pri fs-weiter', onclick: () => this.schliessen() }, '✓ Fertig');
     ap(P, h('div', { class: 'fs-pfuss' }, n > 1 ? h('button', { class: 'btn', 'data-tw': 'fs-zurueck', onclick: () => this.schrittWahl(n - 1) }, `◀ ${SCHRITTE[n - 2][1]}`) : h('span'), vor));
+  }
+  /* ── Schritt 4: Bauteile direkt an die angetippte Wand setzen ── */
+  wandBauteile() {
+    if (!this.ziel.startsWith('wand:')) return null;
+    const k = +this.ziel.slice(5); const sf = this.waende()[k]; if (!sf) return null;
+    const setzen = (art, w0) => {
+      const d0 = SYMBOLE[art]; const w = Math.min(w0 || d0.w, Math.max(300, sf.len - 100)); const d = d0.d;
+      const u = G.norm ? G.norm(G.sub(sf.b, sf.a)) : (() => { const v = G.sub(sf.b, sf.a); const l = Math.hypot(v.x, v.y) || 1; return { x: v.x / l, y: v.y / l }; })();
+      let n = { x: -u.y, y: u.x }; const mid = G.add(G.mul(G.add(sf.a, sf.b), 0.5), G.mul(n, 20)); if (!G.pointInPoly(mid, this.room.poly)) n = { x: u.y, y: -u.x };
+      const p = G.add(G.add(G.mul(G.add(sf.a, sf.b), 0.5), G.mul(n, d / 2)), { x: 0, y: 0 });
+      const rot = G.deg(Math.atan2(n.y, n.x)) - 90; let neu = null;
+      this.ch(d0.name, () => { neu = this.doc.add({ type: 'symbol', kind: art, p, w, d, rot, aussparen: true, storey: this.room.storey }); }, false);
+      if (neu) { this.ziel = 'bt:' + neu.id; this.app.toast(`${d0.name} an Wand ${k + 1} gesetzt – Maße und Höhe rechts einstellen.`); }
+      this.alles();
+    };
+    return h('div', { class: 'fs-zeile wrap fs-wandbt', 'data-tw': 'wand-bauteile' }, h('span', { class: 'muted' }, `An Wand ${k + 1} setzen:`),
+      h('button', { class: 'btn sm', 'data-tw': 'bt-vorwand', onclick: () => setzen('vorwand', 1200) }, '+ Vorwand'),
+      h('button', { class: 'btn sm', 'data-tw': 'bt-nische', onclick: () => setzen('nische', 600) }, '+ Ablage / Nische'),
+      h('button', { class: 'btn sm', 'data-tw': 'bt-sitzbank', onclick: () => setzen('sitzbank', 1500) }, '+ Sitzbank'),
+      h('button', { class: 'btn sm', onclick: () => setzen('schacht', 400) }, '+ Schacht'));
+  }
+  /* ── Schritt 5: Dusche, Gefälle, Abdichtung nach DIN 18534, Bewegungsfugen ── */
+  abd() { const r = this.room; return Object.assign({ ablauf: 'rinne', rinneL: 800, gefaelle: 2, klDusche: 'W2-I', klRaum: 'W1-I', wandH: 2000, hochzug: 300, manW: 2, randfuge: true }, r.abdichtung || {}); }
+  abdSetzen(label, fn) { this.ch(label, () => { const r = this.room; r.abdichtung = Object.assign(this.abd(), r.abdichtung || {}); fn(r.abdichtung); }); }
+  abdRechnen() {
+    const r = this.room; const a = this.abd(); const poly = r.poly;
+    const sy = this.doc.all('symbol', r.storey).find(x => DUSCHEN.includes(x.kind) && G.pointInPoly(x.p, poly));
+    const tasse = sy && (sy.kind === 'duschtasse' || sy.kind === 'duschviertel');
+    const ganz = !sy && a.ganzRaum;
+    const fp = sy ? symbolFootprint(sy) : ganz ? poly : null;
+    const A = G.polyArea(poly) / 1e6; const ws = this.waende();
+    const tuerB = ws.reduce((m, s0) => m + s0.openings.filter(o => o.kind !== 'window' && (o.sill || 0) < 50).reduce((q, o) => q + (o.x1 - o.x0), 0), 0);
+    const umfang = G.polyPerimeter(poly); const umfangN = Math.max(0, umfang - tuerB);
+    let Ad = 0, Lw = 0, ecken = 0, dist = 0, touch = [], kante = 0;
+    if (fp) {
+      Ad = G.polyArea(fp) / 1e6;
+      if (sy) { for (let i = 0; i < 4; i++) { const p0 = fp[i], p1 = fp[(i + 1) % 4]; const m = G.mul(G.add(p0, p1), 0.5); let dmin = Infinity; for (let j = 0; j < poly.length; j++) dmin = Math.min(dmin, G.closestOnSeg(m, poly[j], poly[(j + 1) % poly.length]).d); touch.push(dmin < 80); if (dmin < 80) Lw += G.dist(p0, p1); } for (let i = 0; i < 4; i++) if (touch[i] && touch[(i + 1) % 4]) ecken++; }
+      else { Lw = umfangN; ecken = ws.filter(s0 => s0.eckeRechts === 'innen').length; }
+      if (a.ablauf === 'punkt') { const bb = G.bbox(fp); dist = sy ? Math.hypot(sy.w / 2, sy.d / 2) : Math.hypot(bb.w / 2, bb.h / 2); }
+      else if (a.ablauf === 'rinne' || a.ablauf === 'wand') { if (sy) { let bi = -1, bl = 0; for (let i = 0; i < 4; i++) if (touch[i]) { const l = G.dist(fp[i], fp[(i + 1) % 4]); if (l > bl + 1) { bl = l; bi = i; } } kante = bi < 0 ? 0 : bi; if (a.rinneKante != null && touch[a.rinneKante]) kante = a.rinneKante; dist = G.dist(fp[(kante + 1) % 4], fp[(kante + 2) % 4]); } else dist = Math.min(G.bbox(fp).w, G.bbox(fp).h); }
+    }
+    const bodengleich = fp && !tasse && a.ablauf !== 'keine';
+    const dh = bodengleich ? dist * (a.gefaelle || 0) / 100 : 0;
+    const wandH = a.wandH === 0 ? (r.height || (this.doc.storeyById(r.storey) || {}).roomHeight || 2500) : a.wandH;
+    const Adw = Lw * wandH / 1e6;
+    const raumKl = a.klRaum !== 'keine';
+    const Arb = raumKl ? Math.max(0, A - (ganz ? A : Ad)) : 0;
+    const Lhz = raumKl ? Math.max(0, umfangN - Lw) : 0; const Ahz = Lhz * a.hochzug / 1e6;
+    const band = (raumKl ? umfangN : Lw) + ecken * wandH;
+    const eI = raumKl ? ws.filter(s0 => s0.eckeRechts === 'innen').length : ecken, eA = raumKl ? ws.filter(s0 => s0.eckeRechts === 'aussen').length : 0;
+    const bb = G.bbox(poly); const feld = A > 40 || Math.max(bb.w, bb.h) > 8000;
+    let gefHinweis = '';
+    if (bodengleich) { const f = this.fliese('boden'); const fmax = f ? Math.max(f.L, f.B) : 0;
+      if (a.ablauf === 'punkt') gefHinweis = fmax > 300 ? `Punktablauf mit Fliese ${K.formatText(f)} cm: Kuvertschnitt (Briefumschlag) nötig – besser Fliesen bis 30×30 oder Rinne` : 'Punktablauf: Gefälle zu allen Seiten (Kuvertschnitt), Fliesen bis 30×30 verlegen sich sauber';
+      else gefHinweis = a.ablauf === 'wand' ? 'Einseitiges Gefälle zur Wand – große Fliesen bleiben eben, kein Kuvertschnitt' : 'Einseitiges Gefälle zur Rinne – große Fliesen bleiben eben, kein Kuvertschnitt';
+      if ((a.gefaelle || 0) < 1) gefHinweis += ' · Gefälle unter 1 % – Wasser läuft schlecht ab'; }
+    const kanten = []; if (sy && fp) for (let i = 0; i < 4; i++) if (touch[i]) { const m = G.mul(G.add(fp[i], fp[(i + 1) % 4]), 0.5); let bk = 0, bd = Infinity; ws.forEach((s0, k) => { const d = G.closestOnSeg(m, s0.a, s0.b).d; if (d < bd) { bd = d; bk = k; } }); kanten.push([i, bk]); }
+    return { a, sy, tasse, ganz, fp, kante, kanten, A, Ad, Lw, ecken, dist, dh, wandH, Adw, Arb, Lhz, Ahz, band, eI, eA, umfangN, tuerB, feld, gefHinweis, bodengleich, manB: bodengleich ? 1 : 0 };
+  }
+  abdPanel(P) {
+    const R = this.abdRechnen(); const a = R.a; const r = this.room;
+    const chips = (vals, cur, fn, tw) => { const d = h('div', { class: 'fs-chips fs-bibchips' }); for (const [v, l] of vals) ap(d, h('button', { class: 'chip' + (String(cur) === String(v) ? ' on' : ''), 'data-tw': tw ? tw + '-' + v : null, onclick: () => fn(v) }, l)); return d; };
+    const zahl2 = (v, n = 2) => zahl(v, n);
+    // Dusche
+    if (R.sy) ap(P, h('div', { class: 'fs-sub' }, 'Dusche im Raum'), h('div', { class: 'karte fs-abd-k' }, h('div', {}, h('b', {}, (SYMBOLE[R.sy.kind] || {}).name || 'Dusche'), ` · ${G.fmtCm(R.sy.w)}×${G.fmtCm(R.sy.d)} cm`), R.tasse ? h('div', { class: 'muted' }, 'Duschtasse: kein Gefälle im Boden – Abdichtung der Wände im Duschbereich.') : null));
+    else {
+      const setz = (art) => { const sf = this.waende()[0]; if (!sf) return; const d0 = SYMBOLE[art]; const v = G.sub(sf.b, sf.a); const l = Math.hypot(v.x, v.y) || 1; const u = { x: v.x / l, y: v.y / l }; let n = { x: -u.y, y: u.x }; const mid = G.add(G.mul(G.add(sf.a, sf.b), 0.5), G.mul(n, 20)); if (!G.pointInPoly(mid, r.poly)) n = { x: u.y, y: -u.x }; const w = Math.min(d0.w, sf.len); const p = G.add(G.add(sf.a, G.mul(u, w / 2)), G.mul(n, d0.d / 2)); const rot = G.deg(Math.atan2(n.y, n.x)) - 90; this.ch('Dusche', () => this.doc.add({ type: 'symbol', kind: art, p, w, d: d0.d, rot, storey: r.storey })); };
+      ap(P, h('div', { class: 'fs-sub' }, 'Im Raum ist noch keine Dusche eingezeichnet:'), h('div', { class: 'fs-zeile wrap' },
+        h('button', { class: 'btn sm', 'data-tw': 'abd-dusche', onclick: () => setz('dusche') }, '+ Dusche bodengleich 90×90 in die Ecke'),
+        h('button', { class: 'btn sm', onclick: () => setz('walkin') }, '+ Walk-in 140×90'),
+        h('button', { class: 'btn sm' + (a.ganzRaum ? ' on' : ''), 'data-tw': 'abd-ganz', onclick: () => this.abdSetzen('Ganzer Raum mit Gefälle', x => { x.ganzRaum = !x.ganzRaum; if (x.ganzRaum && x.ablauf === 'rinne') x.ablauf = 'punkt'; }) }, a.ganzRaum ? '✓ ganzer Raum mit Gefälle' : 'ganzer Raum mit Gefälle (Nassraum)')),
+        h('div', { class: 'muted' }, 'Die Dusche lässt sich im Grundriss verschieben und in der Größe ändern (Objekte › Duschen).'));
+    }
+    if (R.fp && !R.tasse) {
+      ap(P, h('div', { class: 'fs-sub' }, 'Ablauf'), chips([['punkt', 'Punktablauf'], ['rinne', 'Duschrinne'], ['wand', 'Wandablauf'], ['keine', 'kein Ablauf']], a.ablauf, v => this.abdSetzen('Ablauf', x => x.ablauf = v), 'abd-ablauf'));
+      if ((a.ablauf === 'rinne' || a.ablauf === 'wand') && R.kanten.length > 1) ap(P, h('div', { class: 'fs-sub' }, a.ablauf === 'rinne' ? 'Rinne an welcher Wand?' : 'Wandablauf an welcher Wand?'), chips(R.kanten.map(([i, k]) => [i, `Wand ${k + 1}`]), R.kante, v => this.abdSetzen('Rinne an Wand', x => x.rinneKante = +v), 'abd-kante'));
+      if (a.ablauf === 'rinne') ap(P, h('div', { class: 'fs-sub' }, 'Rinne an der Wand – Länge'), chips([[700, '70 cm'], [800, '80 cm'], [900, '90 cm'], [1000, '100 cm'], [1200, '120 cm']], a.rinneL, v => this.abdSetzen('Rinne', x => x.rinneL = +v), 'abd-rinne'));
+      if (a.ablauf !== 'keine') ap(P, h('div', { class: 'fs-sub' }, 'Gefälle'), h('div', { class: 'fs-zeile' }, chips([[1, '1 %'], [1.5, '1,5 %'], [2, '2 %']], a.gefaelle, v => this.abdSetzen('Gefälle', x => x.gefaelle = +v), 'abd-gef'), this.num(a.gefaelle, v => this.abdSetzen('Gefälle', x => x.gefaelle = v), { step: 0.1, w: 70 }), h('span', { class: 'muted' }, '%')));
+    }
+    if (R.bodengleich) ap(P, h('div', { class: 'karte fs-abd-k', 'data-tw': 'abd-ergebnis' }, h('b', {}, 'Ergebnis'),
+      h('div', {}, `Weg zum Ablauf: ${G.fmtCm(R.dist)} cm · Höhenunterschied am Rand: `, h('b', {}, `${zahl2(R.dh, 0)} mm`)),
+      h('div', { class: R.gefHinweis.includes('nötig') || R.gefHinweis.includes('schlecht') ? 'fs-warn' : 'fs-gut' }, R.gefHinweis),
+      h('div', { class: 'muted' }, 'Bodenaufbau prüfen: Estrich im Gefälle oder Gefällekeil, Ablauf-Höhe und Aufbauhöhe am Einstieg.')));
+    // Abdichtung
+    ap(P, h('div', { class: 'fs-sub' }, 'Abdichtung nach DIN 18534 – Dusche (Boden und Wand)'), chips([['W1-I', 'W1-I'], ['W2-I', 'W2-I (Dusche privat)'], ['W3-I', 'W3-I (gewerblich)']], a.klDusche, v => this.abdSetzen('Abdichtung Dusche', x => x.klDusche = v), 'abd-kld'),
+      h('div', { class: 'fs-sub' }, 'Abdichtung Raumboden außerhalb der Dusche'), chips([['keine', 'keine'], ['W0-I', 'W0-I'], ['W1-I', 'W1-I (Bad privat)'], ['W2-I', 'W2-I'], ['W3-I', 'W3-I']], a.klRaum, v => this.abdSetzen('Abdichtung Raum', x => x.klRaum = v), 'abd-klr'),
+      h('div', { class: 'fs-sub' }, 'Wandhöhe im Duschbereich'), chips([[2000, '2,00 m'], [2100, '2,10 m'], [2250, '2,25 m'], [0, 'raumhoch']], a.wandH, v => this.abdSetzen('Wandhöhe Dusche', x => x.wandH = +v), 'abd-wh'),
+      a.klRaum !== 'keine' ? [h('div', { class: 'fs-sub' }, 'Hochzug an den übrigen Wänden'), chips([[100, '10 cm'], [150, '15 cm'], [200, '20 cm'], [300, '30 cm']], a.hochzug, v => this.abdSetzen('Hochzug', x => x.hochzug = +v), 'abd-hz')] : null,
+      h('div', { class: 'fs-sub' }, 'Wandmanschetten (Armatur, Brause …)'), chips([[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4']], a.manW, v => this.abdSetzen('Manschetten', x => x.manW = +v), 'abd-man'));
+    const zeile = (l, v) => h('div', { class: 'fs-abd-z' }, h('span', {}, l), h('b', {}, v));
+    ap(P, h('div', { class: 'karte fs-abd-k', 'data-tw': 'abd-mengen' }, h('b', {}, 'Abdichtung – Mengen'),
+      R.fp ? zeile(`Dusche Boden (${a.klDusche})`, R.tasse ? '– (Duschtasse)' : m2(R.Ad)) : null,
+      R.Lw ? zeile(`Dusche Wand ${G.fmtCm(R.Lw)} cm × ${G.fmtCm(R.wandH)} cm`, m2(R.Adw)) : null,
+      a.klRaum !== 'keine' ? zeile(`Raumboden (${a.klRaum})`, m2(R.Arb)) : null,
+      a.klRaum !== 'keine' ? zeile(`Hochzug ${G.fmtCm(a.hochzug)} cm · ${zahl2(R.Lhz / 1000)} m`, m2(R.Ahz)) : null,
+      zeile('Dichtband', `${zahl2(R.band / 1000, 1)} m`), zeile('Dichtecken innen / außen', `${R.eI} / ${R.eA}`),
+      zeile('Bodenmanschette (Ablauf) / Wandmanschetten', `${R.manB} / ${a.manW}`),
+      R.bodengleich && a.ablauf === 'rinne' ? zeile('Duschrinne', `1 × ${G.fmtCm(a.rinneL)} cm`) : null,
+      zeile('Abdichtung gesamt', m2((R.tasse ? 0 : R.Ad) + R.Adw + R.Arb + R.Ahz))));
+    // Bewegungsfugen
+    ap(P, h('div', { class: 'fs-sub' }, 'Bewegungsfugen'), h('label', { class: 'fs-schalter' }, h('input', { type: 'checkbox', checked: a.randfuge, onchange: (e) => this.abdSetzen('Randfuge', x => x.randfuge = e.target.checked) }), h('span', {}, `Randfuge ringsum (Boden/Wand, Wandecken): ${zahl2((R.umfangN + R.ecken * 0) / 1000, 1)} m dauerelastisch`)),
+      R.feld ? h('div', { class: 'note warn' }, 'Raum über 40 m² oder länger als 8 m: Feldbegrenzungsfugen einplanen und Bewegungsfugen des Estrichs übernehmen.') : h('div', { class: 'muted' }, 'Feldbegrenzungsfugen sind bei dieser Raumgröße nicht nötig – Fugen des Estrichs immer übernehmen.'),
+      h('div', { class: 'muted' }, 'Planungshilfe – die Wassereinwirkungsklasse legt der Planer nach DIN 18534-1 fest. Mengen gehen in „Mengen & Plan“ und die Materialliste.'));
+  }
+  abdTabelle() {
+    const rows = []; const alt = this.roomId;
+    for (const r of this.rooms()) { if (r.type === 'tilezone' || !r.abdichtung) continue; this.roomId = r.id; try { const R = this.abdRechnen(); rows.push([this.raumName(r), R]); } catch (e) { } }
+    this.roomId = alt; if (!rows.length) return null;
+    const t = h('table', { class: 'fs-tab-mat' }); ap(t, h('tr', {}, ...['Raum', 'Abdichtung m²', 'Dichtband m', 'Ecken innen/außen', 'Manschetten Boden/Wand', 'Rinne'].map(x => h('th', {}, x))));
+    for (const [n, R] of rows) ap(t, h('tr', {}, h('td', {}, n), h('td', {}, zahl((R.tasse ? 0 : R.Ad) + R.Adw + R.Arb + R.Ahz)), h('td', {}, zahl(R.band / 1000, 1)), h('td', {}, `${R.eI}/${R.eA}`), h('td', {}, `${R.manB}/${R.a.manW}`), h('td', {}, R.bodengleich && R.a.ablauf === 'rinne' ? G.fmtCm(R.a.rinneL) + ' cm' : '–')));
+    return h('div', { style: 'margin-top:14px' }, h('b', {}, 'Abdichtung (DIN 18534)'), t);
   }
   rechtsBauen() {
     const R = this.rechts; R.innerHTML = '';
@@ -776,14 +898,14 @@ class Studio {
   /* ───────── LV ───────── */
   async lvDatei(file = null) {
     if (FREI) return;
-    const M = await import('./ai.js?v=20261123-0645');
+    const M = await import('./ai.js?v=20261123-0745');
     const n0 = this.doc.p.tileLib.length;
     await M.readLV(this.app, file);
     if (this.doc.p.tileLib.length > n0) { this.tab = 'lv'; this.alles(); this.angebotAuto(); }
   }
   async lvDrive() {
     if (FREI) return;
-    const D = await import('./drive.js?v=20261123-0645'); const b = this.doc.p.meta.baustelle; const app = this.app;
+    const D = await import('./drive.js?v=20261123-0745'); const b = this.doc.p.meta.baustelle; const app = this.app;
     if (!D.token()) { try { await D.anmelden(); } catch (e) { return app.toast('Google Drive: ' + e.message, true); } }
     app.toast('Suche LV-Dateien im Baustellen-Ordner …');
     let liste = [];
@@ -849,10 +971,10 @@ class Studio {
     let summe = 0;
     for (const r of S.rows) { summe += r.kosten || 0; const pak = r.cfg.paketM2 > 0 ? Math.ceil(r.stuck * r.L * r.B / 1e6 / r.cfg.paketM2) : r.cfg.stkPaket > 0 ? Math.ceil(r.stuck / r.cfg.stkPaket) : ''; ap(t, h('tr', {}, h('td', {}, swatch(r.cfg, 22), ' ', `${r.name}${r.hersteller ? ' – ' + r.hersteller : ''}${r.cfg.lvPos ? ' (LV ' + r.cfg.lvPos + ')' : ''}`), h('td', {}, r.art), h('td', {}, K.formatText(r)), h('td', {}, r.lfm ? zahl(r.lfm, 1) + ' lfm' : m2(r.m2)), h('td', {}, r.stuck + ' Stk'), h('td', {}, String(pak)), h('td', {}, zahl(r.fugeKg, 1) + ' kg'), h('td', {}, Math.round(r.kleberKg || 0) + ' kg'), h('td', {}, r.kosten ? eur(r.kosten) : '–'), h('td', { class: 'muted' }, r.raeume.join(', ')))); }
     const csv = () => { const lines = ['Fliese;Art;Hersteller;Serie;Artikel-Nr;LV-Pos;Format cm;Menge;Einheit;Bestellung Stk;Fugenmoertel kg;Kleber kg;Kosten EUR;Raeume']; for (const r of S.rows) lines.push([r.name, r.art, r.hersteller, r.cfg.serie || '', r.cfg.artNr || '', r.cfg.lvPos || '', K.formatText(r), (r.lfm || r.m2).toFixed(2).replace('.', ','), r.lfm ? 'lfm' : 'm2', r.stuck, r.fugeKg.toFixed(1).replace('.', ','), Math.round(r.kleberKg || 0), (r.kosten || 0).toFixed(2).replace('.', ','), r.raeume.join(', ')].join(';')); app.downloadBlob(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' }), 'Fliesen-Materialliste.csv'); };
-    app.modal('Materialliste Fliesen – alle Räume', h('div', {}, t, summe ? h('div', { style: 'text-align:right;margin-top:8px;font-weight:700' }, 'Fliesen-Material gesamt (netto): ' + eur(summe)) : null, h('div', { class: 'muted', style: 'margin-top:8px' }, 'Bestellmengen inkl. Reserve und Reststückverwertung; Laibungen sind bei den Wänden enthalten. Kleber nach Format und Verlegeart.')), [h('button', { class: 'btn', onclick: csv }, 'Als CSV (Excel)'), h('button', { class: 'btn pri', onclick: () => this.pdf(true) }, 'Als PDF (dieser Raum)')]);
+    app.modal('Materialliste Fliesen – alle Räume', h('div', {}, t, this.abdTabelle(), summe ? h('div', { style: 'text-align:right;margin-top:8px;font-weight:700' }, 'Fliesen-Material gesamt (netto): ' + eur(summe)) : null, h('div', { class: 'muted', style: 'margin-top:8px' }, 'Bestellmengen inkl. Reserve und Reststückverwertung; Laibungen sind bei den Wänden enthalten. Kleber nach Format und Verlegeart.')), [h('button', { class: 'btn', onclick: csv }, 'Als CSV (Excel)'), h('button', { class: 'btn pri', onclick: () => this.pdf(true) }, 'Als PDF (dieser Raum)')]);
   }
   async pdf(nurMaterial = false) {
-    const M = await import('./print.js?v=20261123-0645');
+    const M = await import('./print.js?v=20261123-0745');
     const holder = h('div', { style: 'position:fixed;left:-9999px;top:0;width:800px;height:600px' }); ap(document.body, holder);
     const v = mountPlanEmbedded(this.app, holder, { roomId: this.roomId, flaeche: 'beides', mode: 'plan' });
     try { await M.printTilePlan(this.app, v, { nurMaterial }); } finally { if (v._ro) v._ro.disconnect(); holder.remove(); }
@@ -860,6 +982,40 @@ class Studio {
 }
 
 function mountPlanEmbedded(app, el, opt) { return mountPlan(app, el, Object.assign({ embedded: true }, opt)); }
+
+/* ───────── Bild für Schritt 5: Dusche, Gefälle, Abdichtungsklassen ───────── */
+function schild(x, t, cx, cy, farbe) { const w = x.measureText(t).width; x.save(); x.fillStyle = 'rgba(255,255,255,0.85)'; x.fillRect(cx - (x.textAlign === 'center' ? w / 2 : 0) - 4, cy - 12, w + 8, 17); x.restore(); x.fillStyle = farbe; x.fillText(t, cx, cy); }
+function abdBild(cv, room, R) {
+  const box = cv.parentElement.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.max(10, box.width * dpr); cv.height = Math.max(10, box.height * dpr); cv.style.width = box.width + 'px'; cv.style.height = box.height + 'px';
+  const x = cv.getContext('2d'); x.scale(dpr, dpr); const W = box.width, H = box.height;
+  x.fillStyle = '#f6f5f2'; x.fillRect(0, 0, W, H);
+  const bb = G.bbox(room.poly); const s = Math.min((W - 120) / bb.w, (H - 140) / bb.h); const ox = (W - bb.w * s) / 2 - bb.x0 * s, oy = (H - bb.h * s) / 2 + bb.y1 * s + 10;
+  const P = (p) => [ox + p.x * s, oy - p.y * s]; const pfad = (poly) => { x.beginPath(); poly.forEach((q, i) => { const [a, b] = P(q); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.closePath(); };
+  x.lineWidth = 14; x.strokeStyle = '#3b3f45'; pfad(room.poly); x.stroke();
+  const kl = R.a.klRaum; x.fillStyle = kl === 'keine' ? '#eceae5' : 'rgba(39,174,96,.22)'; pfad(room.poly); x.fill();
+  if (R.fp && !R.ganz) { x.fillStyle = 'rgba(77,166,255,.38)'; pfad(R.fp); x.fill(); x.lineWidth = 2; x.setLineDash([7, 5]); x.strokeStyle = '#1d6fb8'; pfad(R.fp); x.stroke(); x.setLineDash([]); }
+  else if (R.ganz) { x.fillStyle = 'rgba(77,166,255,.30)'; pfad(room.poly); x.fill(); }
+  x.font = 'bold 14px Arial'; x.textAlign = 'center';
+  const c = R.fp ? G.polyCentroid(R.fp) : null;
+  if (R.fp) { const [cx, cy] = P(c); schild(x, `${R.tasse ? 'Duschtasse' : 'Dusche'} ${R.a.klDusche}`, cx, cy - 8, '#123f6b'); }
+  if (kl !== 'keine' && !R.ganz) { const rc = G.polyCentroid(room.poly); const [a, b] = P(rc); schild(x, `Raumboden ${kl}`, a, b + (R.fp ? 40 : 0), '#1d6b3d'); }
+  // Ablauf und Gefälle
+  if (R.bodengleich && R.sy) {
+    const sy = R.sy; const fp = R.fp; const k = R.kante || 0; const back0 = fp[k], back1 = fp[(k + 1) % 4], front0 = fp[(k + 3) % 4], front1 = fp[(k + 2) % 4];
+    x.strokeStyle = '#C41E1E'; x.fillStyle = '#C41E1E'; x.lineWidth = 2.5;
+    const pfeil = (from, to) => { const [a, b] = P(from), [c2, d] = P(to); x.beginPath(); x.moveTo(a, b); x.lineTo(c2, d); x.stroke(); const ang = Math.atan2(d - b, c2 - a); x.beginPath(); x.moveTo(c2, d); x.lineTo(c2 - 11 * Math.cos(ang - .4), d - 11 * Math.sin(ang - .4)); x.lineTo(c2 - 11 * Math.cos(ang + .4), d - 11 * Math.sin(ang + .4)); x.closePath(); x.fill(); };
+    if (R.a.ablauf === 'punkt') { for (const q of fp) pfeil(G.lerp(q, c, 0.15), G.lerp(q, c, 0.8)); const [a, b] = P(c); x.fillStyle = '#333'; x.beginPath(); x.arc(a, b, 7, 0, 7); x.fill(); }
+    else { const kl0 = G.dist(back0, back1) || 1; const rl = R.a.ablauf === 'rinne' ? Math.min(R.a.rinneL, kl0) / kl0 : 0.15; const m = G.lerp(back0, back1, 0.5); const r0 = G.lerp(m, back0, rl), r1 = G.lerp(m, back1, rl); const inn = G.sub(G.lerp(front0, front1, 0.5), m); const L = Math.hypot(inn.x, inn.y) || 1; const nn = G.mul(inn, 60 / L);
+      const [a, b] = P(G.add(r0, nn)), [c2, d] = P(G.add(r1, nn)); x.strokeStyle = '#333'; x.lineWidth = 7; x.beginPath(); x.moveTo(a, b); x.lineTo(c2, d); x.stroke(); x.strokeStyle = '#C41E1E'; x.lineWidth = 2.5;
+      for (const t of [0.25, 0.5, 0.75]) { const f = G.lerp(front0, front1, t); const bk = G.lerp(back0, back1, t); pfeil(G.lerp(f, bk, 0.1), G.lerp(f, bk, 0.82)); } }
+    const [a, b] = P(c); schild(x, `${zahl(R.a.gefaelle, 1)} % · ${zahl(R.dh, 0)} mm`, a, b + 14, '#C41E1E');
+  }
+  if (R.a.randfuge) { x.setLineDash([9, 6]); x.strokeStyle = '#e67e22'; x.lineWidth = 2; pfad(G.offsetPolys ? (G.offsetPolys([G.ensureCCW(room.poly)], -60)[0] || room.poly) : room.poly); x.stroke(); x.setLineDash([]); }
+  x.textAlign = 'left'; x.font = '12px Arial'; x.fillStyle = '#333';
+  const leg = [['rgba(77,166,255,.6)', `Dusche ${R.a.klDusche}`], [kl === 'keine' ? '#dcd9d2' : 'rgba(39,174,96,.5)', kl === 'keine' ? 'Raumboden ohne Abdichtung' : `Raumboden ${kl}`], ['#e67e22', R.a.randfuge ? 'Randfuge / Dichtband ringsum' : '']].filter(l => l[1]);
+  leg.forEach(([f, t], i) => { x.fillStyle = f; x.fillRect(14, H - 22 - i * 20, 14, 12); x.fillStyle = '#333'; x.fillText(t, 34, H - 12 - i * 20); });
+}
 
 /* ───────── kleine Bilder ───────── */
 /** Bild für die Bibliothek: mehrere Fliesen im Verband mit Fuge */

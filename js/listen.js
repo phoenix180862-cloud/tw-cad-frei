@@ -1,12 +1,12 @@
 // TW-CAD – Ansicht „Listen & Prüfung“: Raumbuch, Türen, Fenster, Bauteilmengen, Plan-Prüfung (mit KI-Erklärung), Planindex
-import * as G from './geom.js?v=20261123-0645';
-import * as A from './auswertung.js?v=20261123-0645';
-import * as W from './walls.js?v=20261123-0645';
-import { icon } from './icons.js?v=20261123-0645';
-import { FIRMA } from './print.js?v=20261123-0645';
-import { FREI, WERBUNG } from './frei.js?v=20261123-0645';
-import { pdfVorbereiten } from './i18n.js?v=20261123-0645';
-import { pdfSafe } from './painter.js?v=20261123-0645';
+import * as G from './geom.js?v=20261123-0745';
+import * as A from './auswertung.js?v=20261123-0745';
+import * as W from './walls.js?v=20261123-0745';
+import { icon } from './icons.js?v=20261123-0745';
+import { FIRMA } from './print.js?v=20261123-0745';
+import { FREI, WERBUNG } from './frei.js?v=20261123-0745';
+import { pdfVorbereiten } from './i18n.js?v=20261123-0745';
+import { pdfSafe } from './painter.js?v=20261123-0745';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const n2 = (v, d = 2) => (v || 0).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -195,7 +195,7 @@ class Listen {
   }
   async kiErklaeren(res, E) {
     if (FREI) return;
-    const AI = await import('./ai.js?v=20261123-0645');
+    const AI = await import('./ai.js?v=20261123-0745');
     if (!AI.bereit()) { this.app.toast('Erst KI einrichten (Stern-Knopf oben) – dann erklärt sie die Prüfung.', true); AI.openAI(this.app); return; }
     const offen = res.filter(r => r.stufe !== 'ok'); if (!offen.length) { this.kiText = 'Alles erfüllt – die Prüfung hat keine Fehler oder Hinweise gefunden. 👍'; this.render(); return; }
     this.app.toast('KI denkt nach …');

@@ -853,7 +853,7 @@ details.bk[open] .bk-kurz { display: none; }
 .fs-st { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--line2); background: var(--bg3); color: var(--tx2); text-align: left; cursor: pointer; font: inherit; }
 .fs-st i { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--line2); color: #fff; font: 700 13px var(--font); font-style: normal; }
 .fs-st span { min-width: 0; display: flex; flex-direction: column; }
-.fs-st b { font-size: 13px; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs-st b { font-size: 13px; line-height: 1.15; color: var(--tx); overflow-wrap: anywhere; }
 .fs-st small { font-size: 11px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fs-st.ok i { background: #27AE60; }
 .fs-st.akt { border: 2px solid var(--red, #C41E1E); background: color-mix(in srgb, var(--red, #C41E1E) 14%, var(--bg3)); }
@@ -906,3 +906,14 @@ details.bk[open] .bk-kurz { display: none; }
 .fs-bibk b { font-size: 12.5px; line-height: 1.2; }
 .fs-bibk small { font-size: 11px; color: var(--tx3); }
 @media (max-width: 900px) { .fs-body.f1 .fs-mitte { min-height: 0; } .fs-body.f1 .fs-vorschau { min-height: 0; } .fs-panel { padding-bottom: 0; } }
+/* Schritt 5 Dusche & Abdichtung */
+.fs-abd-bild { position: absolute; inset: 0; z-index: 5; background: #f6f5f2; }
+.fs-abd-bild canvas { display: block; }
+.fs-abd-k { display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; }
+.fs-abd-z { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.fs-abd-z:last-child { border-bottom: 0; font-size: 13.5px; }
+.fs-warn { color: #ffd36b; font-weight: 600; }
+.fs-gut { color: #7ee2a8; font-weight: 600; }
+.fs-wandbt { margin: 4px 0 8px; }
+/* Schritt 5: Zahlenfelder in Zeilen (Gefälle) wie die übrigen Felder des Studios */
+.fs-panel .fs-zeile input[type=number] { background: var(--bg); border: 1px solid var(--line2); border-radius: 6px; padding: 5px 7px; color: var(--tx); min-height: 36px; }

@@ -1,7 +1,7 @@
 // TW-CAD – Objekte-Fenster (Thomas 22.11.2026): „wenn ich Objekte anwähle, ein Fenster aufgehen, das mir alle Objekte zeigt
 // und wo ich dann in diesem Fenster alles einstelle“. Gruppen links, Bilder in der Mitte, Größe/Drehung/Fliesen rechts.
-import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, drawSymbol } from './render2d.js?v=20261123-0645';
-import { CanvasPainter } from './painter.js?v=20261123-0645';
+import { SYMBOLE, SYMBOL_KATEGORIEN, symboleIn, drawSymbol } from './render2d.js?v=20261123-0745';
+import { CanvasPainter } from './painter.js?v=20261123-0745';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c)); return e; };
 const ZULETZT = 'twcad_obj_zuletzt';
