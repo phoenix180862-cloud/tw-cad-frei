@@ -1,5 +1,5 @@
 // TW-CAD – Prozedurale Texturen (Fliesen, Fassaden, Dächer) – nur im Browser
-import { hexToRgb, shade } from './painter.js?v=20261122-2215';
+import { hexToRgb, shade } from './painter.js?v=20261123-0645';
 
 const cache = new Map();
 const imgs = new Map();

@@ -2,16 +2,16 @@
 //   links  „① Wohin?“     Boden, Randfries, alle Wände, jede Wand einzeln, Wand oben (2. Fliese), Bordüre/Fries, Sockel
 //   Mitte  Vorschau (Verlegeplan/Kundenansicht, Startpunkt ziehen) + „② Welche Fliese?“ (Projekt · LV · Katalog · Eigene)
 //   rechts „③ Wie verlegen?“  Verband, Richtung, Startpunkt, Fugen, Höhen, Kanten/Kleber, Mengen & Kosten, Übertragen
-import * as G from './geom.js?v=20261122-2215';
-import * as T from './tiles.js?v=20261122-2215';
-import * as K from './fliesenkatalog.js?v=20261122-2215';
-import { wallSurfaces, wallTilePlan, tileSummary, raumBauteile, bauteilSeiten, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261122-2215';
-import { floorTiles, zoneTiles } from './render2d.js?v=20261122-2215';
-import * as W from './walls.js?v=20261122-2215';
-import { TILE_TEXTUREN, tileSurface } from './textures.js?v=20261122-2215';
-import { mount as mountPlan, shrinkImage } from './tileplan.js?v=20261122-2215';
-import { uid } from './model.js?v=20261122-2215';
-import { FREI, einstieg } from './frei.js?v=20261122-2215';
+import * as G from './geom.js?v=20261123-0645';
+import * as T from './tiles.js?v=20261123-0645';
+import * as K from './fliesenkatalog.js?v=20261123-0645';
+import { wallSurfaces, wallTilePlan, tileSummary, raumBauteile, bauteilSeiten, bauteilHoehe, raumHoehe } from './tilecalc.js?v=20261123-0645';
+import { floorTiles, zoneTiles } from './render2d.js?v=20261123-0645';
+import * as W from './walls.js?v=20261123-0645';
+import { TILE_TEXTUREN, tileSurface } from './textures.js?v=20261123-0645';
+import { mount as mountPlan, shrinkImage } from './tileplan.js?v=20261123-0645';
+import { uid } from './model.js?v=20261123-0645';
+import { FREI, einstieg } from './frei.js?v=20261123-0645';
 
 const h = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'html') e.innerHTML = v; else if (k === 'style') e.style.cssText = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); } for (const c of kids.flat()) if (c != null && c !== false) ap(e, c.nodeType ? c : document.createTextNode(c)); return e; };
 const zahl = (v, d = 2) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',');
@@ -24,6 +24,23 @@ const BODEN_STD = { L: 600, B: 300, fuge: 3, verband: 'drittel', farbe: '#bdb5a8
 const WAND_STD = { L: 600, B: 300, fuge: 2, verband: 'kreuz', farbe: '#f3f1ec', textur: 'glanz', name: 'Wandfliese 30×60', hoehe: 0, xModus: 'boden', yModus: 'unten', material: 'steingut', oberflaeche: 'glaenzend', staerke: 8 };
 
 let offen = null;
+const _u = (f) => !f[3];
+const OPTIK = [
+  ['beton', 'Beton', ['beton', 'gross'], f => f[3] === 'beton' || ['hellgrau', 'grau', 'mittelgrau', 'dunkelgrau', 'anthrazit', 'greige', 'sand', 'taupe'].includes(f[0]), 'beton'],
+  ['marmor', 'Marmor', ['marmor'], f => f[3] === 'marmor'],
+  ['holz', 'Holz', ['holz', 'chevron'], f => f[3] === 'holz'],
+  ['stein', 'Naturstein', ['naturstein', 'schiefer'], f => ['naturstein', 'schiefer'].includes(f[3]) || ['beige', 'sand', 'taupe', 'creme', 'anthrazit'].includes(f[0]), 'naturstein'],
+  ['terrazzo', 'Terrazzo', ['fsz_boden'], f => f[3] === 'terrazzo' || ['weiß matt', 'creme', 'hellgrau', 'greige', 'anthrazit'].includes(f[0]), 'terrazzo'],
+  ['uni', 'Uni', ['fsz_boden', 'wand'], f => _u(f) || f[3] === 'glanz'],
+  ['metro', 'Metro', ['metro'], f => _u(f) || f[3] === 'glanz'],
+  ['zement', 'Zementfliese', ['zement', 'sechseck'], f => ['weiß matt', 'creme', 'beige', 'greige', 'grau', 'anthrazit', 'schwarz', 'Terracotta', 'Salbei', 'Petrol', 'dunkelblau'].includes(f[0]), 'zement'],
+  ['mosaik', 'Mosaik', ['mosaik', 'glasmosaik'], f => _u(f) || f[3] === 'glanz'],
+  ['klinker', 'Klinker & Cotto', ['klinker', 'cotto', 'riemchen'], f => ['Terracotta', 'rot', 'sand', 'beige', 'taupe', 'grau', 'anthrazit', 'schwarz'].includes(f[0])],
+  ['becken', 'Schwimmbad', ['schwimmbad'], f => ['weiß matt', 'Beckenblau', 'hellblau', 'türkis', 'dunkelblau', 'hellgrau', 'grau', 'anthrazit'].includes(f[0])],
+  ['aussen', 'Außen 2 cm', ['aussen'], f => f[3] === 'beton' || ['Travertin', 'Schiefer', 'grau', 'anthrazit', 'sand', 'greige'].includes(f[0]), 'beton'],
+];
+const SCHRITTE = [[1, 'Raum'], [2, 'Fliese'], [3, 'Verlegung'], [4, 'Wände'], [5, 'Dusche & Abdichtung'], [6, 'Mengen & Plan']];
+const TEIL = { 'Verlegemuster & Richtung': 'verlegung', 'Startpunkt (Fugenkreuz)': 'verlegung', 'Fugen': 'verlegung', 'Kanten, Verlegeart & Kleber': 'verlegung', 'Höhe & Fugenlage Wände': 'waende', 'Höhe & Fugenlage dieser Wand': 'waende', 'Zweiteilung': 'waende', 'Bordüre / Fries': 'flaeche', 'Mengen & Kosten (Raum)': 'mengen', 'Übertragen & Entfernen': 'mengen' };
 export function istOffen() { return !!offen; }
 
 /** Fliesen-Studio öffnen. opt: { roomId, ziel, onClose } */
@@ -48,8 +65,10 @@ class Studio {
     this.links = h('div', { class: 'fs-links' }); this.mitte = h('div', { class: 'fs-mitte' }); this.rechts = h('div', { class: 'fs-rechts' });
     this.vorschauKopf = h('div', { class: 'fs-vk' }); this.vorschau = h('div', { class: 'fs-vorschau' });
     this.wahl = h('div', { class: 'fs-wahl' });
-    ap(this.mitte, this.vorschauKopf, this.vorschau, this.wahl);
-    ap(this.box, this.kopf, h('div', { class: 'fs-body' }, this.links, this.mitte, this.rechts));
+    // Entwurf F1 „Schritt für Schritt“ (Thomas 22.11.2026): Schritte oben, Vorschau links, immer nur ein Schritt rechts
+    this.schritt = opt.schritt || 2; this.leiste = h('div', { class: 'fs-schritte', 'data-tw': 'fs-schritte' }); this.panel = h('div', { class: 'fs-panel', 'data-tw': 'fs-panel' });
+    ap(this.mitte, this.vorschauKopf, this.vorschau);
+    ap(this.box, this.kopf, this.leiste, h('div', { class: 'fs-body f1' }, this.mitte, this.panel));
     ap(document.body, this.ov); document.body.classList.add('studio-open');
     this.onKey = (e) => { if (e.key === 'Escape' && document.getElementById('modal').classList.contains('hidden')) { e.preventDefault(); e.stopPropagation(); this.schliessen(); } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) { e.preventDefault(); e.stopPropagation(); if (e.shiftKey) app.redo(); else app.undo(); this.alles(); } };
     window.addEventListener('keydown', this.onKey, true);
@@ -163,30 +182,31 @@ class Studio {
     const sc = [this.links, this.wahl.querySelector('.fs-liste'), this.rechts].map(e => e ? e.scrollTop : 0);
     if (!this.room && this.app.raeumeErkennen) { const n = this.app.raeumeErkennen(); if (n) { const r0 = this.rooms()[0]; if (r0) this.roomId = r0.id; this.app.toast(n === 1 ? 'Ein Raum aus den Wänden erkannt.' : `${n} Räume aus den Wänden erkannt.`); } }
     if (!this.room) { this.kopfBauen(); this.links.innerHTML = ''; ap(this.links, h('div', { class: 'note' }, 'Noch kein Raum: Die Wände umschließen noch keinen Bereich. Wandecken im Grundriss schließen (Wand an Wand ansetzen) – dann erkennt das Fliesen-Studio den Raum von selbst.')); this.rechts.innerHTML = ''; this.wahl.innerHTML = ''; return; }
-    this.kopfBauen(); this.linksBauen(); this.wahlBauen(); this.rechtsBauen(); this.vorschauBauen();
-    requestAnimationFrame(() => { this.links.scrollTop = sc[0]; const l = this.wahl.querySelector('.fs-liste'); if (l) l.scrollTop = sc[1]; this.rechts.scrollTop = sc[2]; });
+    const psc = this.panel.scrollTop;
+    this.kopfBauen(); this.linksBauen(); this.wahlBauen(); this.rechtsBauen(); this.vorschauBauen(); this.schrittBauen();
+    requestAnimationFrame(() => { this.panel.scrollTop = psc; });
   }
   kopfBauen() {
     const k = this.kopf; k.innerHTML = '';
     const sel = h('select', { class: 'fs-raum', title: 'Raum wechseln', onchange: () => { this.roomId = sel.value; if (this.istZone()) this.ziel = 'zone'; else if (this.ziel === 'zone') this.ziel = 'boden'; this.planNeu = true; this.alles(); } });
     for (const r of this.rooms()) { const st = this.doc.storeyById(r.storey); ap(sel, h('option', { value: r.id, selected: r.id === this.roomId }, this.raumName(r) + (st && this.doc.p.storeys.length > 1 ? ` · ${st.name}` : ''))); }
     ap(k, h('b', { class: 'fs-titel' }, '🧱 Fliesen-Studio'), sel,
-      h('span', { class: 'fs-hinweis' }, '① links WOHIN · ② Mitte WELCHE Fliese · ③ rechts WIE verlegen – die Vorschau ändert sich sofort.'),
+      h('span', { class: 'fs-hinweis' }),
       h('button', { class: 'btn sm', title: 'Rückgängig (Strg+Z)', onclick: () => { this.app.undo(); this.alles(); } }, '↶'),
       h('button', { class: 'btn sm', title: 'Wiederholen', onclick: () => { this.app.redo(); this.alles(); } }, '↷'),
       h('button', { class: 'btn sm', onclick: () => this.materialliste() }, '📋 Materialliste'),
       h('button', { class: 'btn sm', onclick: () => this.pdf() }, '📄 Verlegeplan PDF'),
       !this.istZone() ? h('button', { class: 'btn sm', title: 'Raum in 3D von innen ansehen – Boden, Wände, Vorwände', onclick: async () => { const id = this.roomId; const app = this.app; this.schliessen(); await app.setMode('3d'); for (let i = 0; i < 40 && !(app.modeView && app.modeView.raumInnen); i++) await new Promise(r => setTimeout(r, 100)); setTimeout(() => app.modeView && app.modeView.raumInnen && app.modeView.raumInnen(id), 300); } }, '🧊 3D von innen') : null,
-      h('button', { class: 'ib help', title: 'Hilfe zum Fliesen-Studio', onclick: () => import('./help.js?v=20261122-2215').then(H => H.open('fliesenstudio')) }, '?'),
-      h('button', { class: 'btn pri', 'data-fs': 'fertig', onclick: () => this.schliessen() }, '✓ Fertig'));
+      h('button', { class: 'ib help', title: 'Hilfe zum Fliesen-Studio', onclick: () => import('./help.js?v=20261123-0645').then(H => H.open('fliesenstudio')) }, '?'),
+      h('button', { class: 'btn', 'data-fs': 'fertig', onclick: () => this.schliessen() }, '✓ Fertig'));
   }
   /* ── links: Wohin? ── */
   linksBauen() {
     const L = this.links; L.innerHTML = ''; const r = this.room;
-    ap(L, h('div', { class: 'fs-l' }, '① Wohin?'));
+    ap(L, h('div', { class: 'fs-l nur1' }, 'Welche Flächen im Raum werden gefliest?'));
     const knopf = (z, icon, label, sub, eingerueckt = false) => {
       const f = this.fliese(z); const an = this.aktiv(z);
-      return h('button', { class: 'fs-ziel' + (this.ziel === z ? ' an' : '') + (eingerueckt ? ' ein' : '') + (an ? '' : ' aus'), 'data-ziel': z, onclick: () => { this.ziel = z; this.edit = null; this.alles(); } },
+      return h('button', { class: 'fs-ziel' + (this.ziel === z ? ' an' : '') + (eingerueckt ? ' ein' : '') + (an ? '' : ' aus') + (['boden', 'rand', 'sockel', 'zone'].includes(z) ? ' nur1' : ''), 'data-ziel': z, onclick: () => { this.ziel = z; this.edit = null; this.alles(); } },
         h('span', { class: 'fs-sw' }, an && f ? swatch(f, 34) : h('span', { class: 'fs-leer' }, icon)),
         h('span', { class: 'fs-zt' }, h('b', {}, label), h('small', {}, an && f ? `${f.name || 'Fliese'} · ${K.formatText(f)}${sub ? ' · ' + sub : ''}` : (sub || 'nicht gefliest'))));
     };
@@ -220,9 +240,9 @@ class Studio {
     let fl = 0, um = 0; if (r.poly) { fl = G.polyArea(r.poly) / 1e6; um = G.polyPerimeter(r.poly) / 1000; }
     const kv = h('div', { class: 'kv', style: 'margin-top:6px' }, h('span', {}, 'Fläche'), h('b', {}, m2(fl)), h('span', {}, 'Umfang'), h('b', {}, zahl(um) + ' m'));
     if (!this.istZone()) { const st = doc.storeyById(r.storey); ap(kv, h('span', {}, 'Raumhöhe'), h('b', {}, G.fmtCm(r.height || (st && st.roomHeight) || 2500) + ' cm')); const ws = this.waende(); ap(kv, h('span', {}, 'Wände / Öffnungen'), h('b', {}, `${ws.length} / ${ws.reduce((a, s) => a + s.openings.length, 0)}`)); }
-    ap(L, h('div', { class: 'fs-l', style: 'margin-top:16px' }, 'Raum'), kv);
+    ap(L, h('div', { class: 'fs-l nur1', style: 'margin-top:16px' }, 'Raum'), h('div', { class: 'nur1' }, kv));
     const rooms = this.rooms(); const i = rooms.findIndex(x => x.id === this.roomId);
-    ap(L, h('div', { class: 'btns', style: 'margin-top:10px' },
+    ap(L, h('div', { class: 'btns nur1', style: 'margin-top:10px' },
       h('button', { class: 'btn sm', disabled: i <= 0, onclick: () => { this.roomId = rooms[i - 1].id; if (this.istZone()) this.ziel = 'zone'; else if (this.ziel === 'zone') this.ziel = 'boden'; this.planNeu = true; this.alles(); } }, '◀ voriger Raum'),
       h('button', { class: 'btn sm', disabled: i >= rooms.length - 1, onclick: () => { this.roomId = rooms[i + 1].id; if (this.istZone()) this.ziel = 'zone'; else if (this.ziel === 'zone') this.ziel = 'boden'; this.planNeu = true; this.alles(); } }, 'nächster Raum ▶')));
   }
@@ -253,7 +273,7 @@ class Studio {
     const lib = this.doc.p.tileLib; const lv = lib.filter(t => t.quelle === 'lv' || t.pos);
     const tabs = h('div', { class: 'fs-tabs' }, h('span', { class: 'fs-l' }, `② Welche Fliese? → ${this.zielName()}`));
     if (this.tab === 'lv' && einstieg()) this.tab = lib.length ? 'projekt' : 'katalog';
-    for (const [id, l] of [['projekt', `Im Projekt (${lib.length})`], ['lv', `📋 Aus dem LV (${lv.length})`], ['katalog', '📚 Katalog'], ['eigene', FREI ? '✎ Eigene / Foto' : '✎ Eigene / Foto / Internet']]) ap(tabs, h('button', { class: 'fs-tab' + (this.tab === id ? ' an' : ''), 'data-tab': id, 'data-stufe': id === 'lv' ? 'profi' : null, onclick: () => { this.tab = id; this.edit = null; this.wahlBauen(); } }, l));
+    for (const [id, l] of [['projekt', `Im Projekt (${lib.length})`], ['lv', `📋 Aus dem LV (${lv.length})`], ['katalog', '📚 Bibliothek'], ['eigene', FREI ? '✎ Eigene / Foto' : '✎ Eigene / Foto / Internet']]) ap(tabs, h('button', { class: 'fs-tab' + (this.tab === id ? ' an' : ''), 'data-tab': id, 'data-stufe': id === 'lv' ? 'profi' : null, onclick: () => { this.tab = id; this.edit = null; this.wahlBauen(); } }, l));
     const liste = h('div', { class: 'fs-liste' });
     ap(W0, tabs, liste);
     if (this.ziel === 'sockel' && this.cfg('sockel') && this.cfg('sockel').quelle === 'boden') ap(liste, h('div', { class: 'note' }, 'Der Sockel wird aus der Bodenfliese geschnitten. Eine eigene Sockelfliese antippen = Sockel aus dieser Fliese.'));
@@ -310,7 +330,40 @@ class Studio {
     ap(liste, h('div', { class: 'muted', style: 'margin:4px 0 8px' }, 'Antippen = für „' + this.zielName() + '“ übernehmen. „Automatisch belegen“: Boden ← Bodenfliese, Wände ← Wandfliese, Sockel ← Sockelposition; passt der Raumname zu einer Position (z. B. „Bad“), wird diese genommen.'));
     for (const t of lv) ap(liste, this.karte(t));
   }
+  /* ── Fliesen-Bibliothek mit Bildern (Thomas 22.11.2026): Optik → Format → Raum → Fliese antippen ── */
+  tabBibliothek(liste) {
+    const boden = ['boden', 'rand', 'zone', 'sockel'].includes(this.ziel);
+    if (!this.bibOptik) this.bibOptik = boden ? 'beton' : 'uni';
+    const op = OPTIK.find(o => o[0] === this.bibOptik) || OPTIK[0];
+    const kats = op[2].map(id => K.KATEGORIEN.find(k => k.id === id)).filter(Boolean);
+    const formate = []; for (const k of kats) for (const f of k.formate) { const key = Math.min(f[0], f[1]) + 'x' + Math.max(f[0], f[1]); if (!formate.some(x => x[0] === key)) formate.push([key, f]); }
+    formate.sort((a, b) => a[1][0] * a[1][1] - b[1][0] * b[1][1]);
+    const std = boden ? ['60x60', '30x60', '60x120', '20x120'] : ['30x60', '20x60', '7.5x15', '30x90'];
+    if (!this.bibFormat || !formate.some(f => f[0] === this.bibFormat)) this.bibFormat = (std.find(s0 => formate.some(f => f[0] === s0)) || (formate[Math.floor(formate.length / 2)] || [''])[0]);
+    const chips = (vals, cur, fn, tw) => { const d = h('div', { class: 'fs-chips fs-bibchips' }); for (const [v, l] of vals) ap(d, h('button', { class: 'chip' + (cur === v ? ' on' : ''), 'data-tw': tw ? tw + '-' + v : null, onclick: () => { fn(v); this.wahlBauen(); } }, l)); return d; };
+    ap(liste, h('div', { class: 'fs-sub' }, 'Optik'), chips(OPTIK.map(o => [o[0], o[1]]), this.bibOptik, v => { this.bibOptik = v; this.bibFormat = null; }, 'bib-optik'),
+      h('div', { class: 'fs-sub' }, 'Format (cm)'), chips(formate.map(([k, f]) => [k, `${K.cm(Math.min(f[0], f[1]) * 10)}×${K.cm(Math.max(f[0], f[1]) * 10)}`]), this.bibFormat, v => { this.bibFormat = v; }, 'bib-format'),
+      h('div', { class: 'fs-sub' }, 'Rutschhemmung und Oberfläche'), chips([['', 'wie Fliese'], ['R9', 'R9'], ['R10', 'R10 Bad'], ['R11', 'R11'], ['B', 'B barfuß/Dusche'], ['C', 'C Becken']], this.katR, v => { this.katR = v; }),
+      chips([['', 'wie Fliese'], ['matt', 'matt'], ['glaenzend', 'glänzend'], ['poliert', 'poliert'], ['strukturiert', 'strukturiert']], this.katOber, v => { this.katOber = v; }));
+    const fm = (formate.find(f => f[0] === this.bibFormat) || formate[0] || [0, [30, 60]])[1];
+    const kat = kats.find(k => k.formate.some(f => Math.min(f[0], f[1]) === Math.min(fm[0], fm[1]) && Math.max(f[0], f[1]) === Math.max(fm[0], fm[1]))) || kats[0];
+    const extra = {}; if (this.katOber) extra.oberflaeche = this.katOber; if (this.katR) extra.rutsch = this.katR;
+    const gitter = h('div', { class: 'fs-bib' });
+    for (const f of K.FARBEN.filter(op[3])) {
+      const farbe = op[4] && !f[3] ? [f[0], f[1], f[2] || '', op[4]] : f;
+      const t = K.ausKatalog(kat, fm, farbe, extra); t.name = (f[0].toLowerCase().includes(op[1].toLowerCase().split(' ')[0]) ? f[0][0].toUpperCase() + f[0].slice(1) : `${op[1].split(' ')[0]} ${f[0]}`) + ` ${K.formatText(t)}`;
+      const akt = this.fliese(); const an = akt && akt.L === t.L && akt.B === t.B && akt.farbe === t.farbe && akt.textur === t.textur;
+      ap(gitter, h('button', { class: 'fs-bibk' + (an ? ' an' : ''), 'data-tw': 'bib-fliese', title: `${t.name} – für „${this.zielName()}“ übernehmen`, onclick: () => { const n = this.libNeu(t); this.zuweisen(n); } },
+        bibBild(t), h('b', {}, t.name), h('small', {}, [K.formatText(t) + ' cm', t.rutsch, (K.OBERFLAECHEN.find(o => o[0] === t.oberflaeche) || [0, ''])[1]].filter(Boolean).join(' · '))));
+    }
+    ap(liste, h('div', { class: 'fs-sub' }, `Fliese antippen = für „${this.zielName()}“ übernehmen`), gitter,
+      h('button', { class: 'btn sm', 'data-tw': 'bib-frei', onclick: () => { this.katFrei = true; this.wahlBauen(); } }, '✎ Sorte, Farbe und Format frei zusammenstellen …'),
+      kat && kat.id === 'gross' ? h('div', { class: 'note warn' }, 'Großformat: Untergrund-Ebenheit nach DIN 18202 Zeile 4 prüfen, Buttering-Floating, Kleber C2 S1/S2, Fuge mind. 3 mm, kein Halbverband.') : null,
+      kat && kat.matte ? h('div', { class: 'note' }, `Mosaik wird als Einzelsteine gerechnet (Matten meist ${kat.matte / 10}×${kat.matte / 10} cm).`) : null);
+  }
   tabKatalog(liste) {
+    if (!this.katFrei) return this.tabBibliothek(liste);
+    ap(liste, h('button', { class: 'btn sm', style: 'margin-bottom:8px', onclick: () => { this.katFrei = false; this.wahlBauen(); } }, '◀ zurück zur Bibliothek mit Bildern'));
     const kats = h('div', { class: 'fs-kats' });
     for (const k of K.KATEGORIEN) ap(kats, h('button', { class: 'fs-kat' + (this.katId === k.id ? ' an' : ''), onclick: () => { this.katId = k.id; const f = K.FARBEN.find(x => x[3] && x[3] === k.textur); if (f && ['holz', 'marmor', 'beton', 'naturstein', 'schiefer'].includes(k.textur)) this.katFarbe = f; this.wahlBauen(); } }, k.icon + ' ' + k.name));
     const kat = K.KATEGORIEN.find(k => k.id === this.katId) || K.KATEGORIEN[0];
@@ -346,7 +399,7 @@ class Studio {
     };
     const internet = async () => {
       const t = { id: uid('t'), name: 'Fliese aus Internet', L: 600, B: 300, fuge: 2, farbe: '#d9d4cc', textur: 'uni', quelle: 'internet', bereich: ['boden', 'rand'].includes(this.ziel) ? 'boden' : 'wand' };
-      const M = await import('./ai.js?v=20261122-2215');
+      const M = await import('./ai.js?v=20261123-0645');
       M.searchTile(this.app, t, () => { if (t.hersteller || t.artikel) t.name = [t.hersteller, t.artikel].filter(Boolean).join(' '); this.ch('Fliese aus Internet', () => this.doc.p.tileLib.push(t), false); this.zuweisen(t); });
     };
     ap(liste, 
@@ -378,20 +431,71 @@ class Studio {
       h('div', { class: 'fs-eg' }, inp('farbname', 'Farbname'), inp('farbe', 'Farbe', 'color'), inp('farbe2', 'Zweitfarbe / Äderung', 'color'), sel('textur', 'Optik', [...Object.entries(TILE_TEXTUREN), ['bild', 'Foto der Fliese']]), inp('fugeFarbe', 'Fugenfarbe (Vorschlag)', 'color')),
       h('div', { class: 'fs-eg' }, inp('preisM2', 'Preis €/m² (netto)', 'number', 0.01), inp('paketM2', 'm² je Paket', 'number', 0.01), inp('stkPaket', 'Stück je Paket', 'number', 1), inp('pos', 'LV-Position'), inp('notiz', 'Notiz')),
       h('div', { class: 'fs-zeile wrap' }, h('button', { class: 'btn sm', onclick: () => file.click() }, '📷 Foto hochladen'), t.bildData ? h('button', { class: 'btn sm', onclick: () => this.libAendern(t, x => { x.bildData = null; if (x.textur === 'bild') x.textur = 'uni'; }) }, 'Foto entfernen') : null,
-        FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261122-2215'); const tmp = clone(t); M.searchTile(this.app, tmp, () => this.libAendern(t, (x) => { for (const k of ['hersteller', 'artikel', 'farbe', 'farbe2', 'textur', 'L', 'B', 'bildData', 'quelle']) if (tmp[k] !== undefined) x[k] = tmp[k]; if (tmp.artikel && !x.serie) x.serie = tmp.artikel; })); } }, '🔎 Optik im Internet suchen (KI)'),
+        FREI ? null : h('button', { class: 'btn sm', onclick: async () => { const M = await import('./ai.js?v=20261123-0645'); const tmp = clone(t); M.searchTile(this.app, tmp, () => this.libAendern(t, (x) => { for (const k of ['hersteller', 'artikel', 'farbe', 'farbe2', 'textur', 'L', 'B', 'bildData', 'quelle']) if (tmp[k] !== undefined) x[k] = tmp[k]; if (tmp.artikel && !x.serie) x.serie = tmp.artikel; })); } }, '🔎 Optik im Internet suchen (KI)'),
         t.link ? h('a', { href: t.link, target: '_blank', class: 'btn sm' }, '↗ Produktseite') : null, file),
       t.lvText ? h('details', {}, h('summary', {}, 'LV-Text'), h('div', { class: 'muted', style: 'white-space:pre-wrap;font-size:11.5px' }, t.lvText)) : null,
       h('div', { class: 'muted' }, 'Änderungen gelten sofort in allen Räumen, die diese Fliese verwenden.'));
     return box;
   }
   /* ── rechts: Wie verlegen? ── */
+  /* ── Entwurf F1: Schritt-Leiste und rechte Spalte ── */
+  schrittStand() {
+    const fb = this.aktiv('boden') || this.aktiv('zone'), fw = this.aktiv('wand');
+    const f = (z) => { const t = this.fliese(z); return t ? `${t.name || 'Fliese'}` : ''; };
+    return {
+      1: [!!this.room, this.room ? `${this.raumName(this.room)} · ${m2(this.room.poly ? G.polyArea(this.room.poly) / 1e6 : 0)}` : 'Raum wählen'],
+      2: [fb || fw, fb || fw ? [fb ? 'Boden ✓' : '', fw ? 'Wand ✓' : ''].filter(Boolean).join(' · ') : 'Boden, Wand, Sockel'],
+      3: [fb || fw, fb ? (K.VERBAENDE || []).length ? 'Muster, Start, Fuge' : 'Muster, Start, Fuge' : 'Muster, Start, Fuge'],
+      4: [fw, fw ? (this.cfg('wand').hoehe === 'tuer' ? 'bis Türhöhe' : this.cfg('wand').hoehe > 0 ? `bis ${G.fmtCm(this.cfg('wand').hoehe)} cm` : 'raumhoch') : 'jede Wand einzeln'],
+      5: [false, 'Gefälle, DIN 18534'],
+      6: [false, 'Material, Plan als PDF'] };
+  }
+  schrittWahl(n) {
+    this.schritt = n;
+    const z = this.ziel; const wandZiel = z === 'wand' || z.startsWith('wand:') || z === 'oben' || z === 'fries' || z.startsWith('bt:');
+    if (n === 4 && !this.istZone() && !wandZiel) this.ziel = 'wand';
+    if ((n === 2 || n === 3) && (z.startsWith('wand:') || z.startsWith('bt:'))) this.ziel = 'wand';
+    this.edit = null; this.panel.scrollTop = 0; this.alles();
+  }
+  schrittBauen() {
+    const L = this.leiste; L.innerHTML = ''; const st = this.schrittStand();
+    for (const [n, titel] of SCHRITTE) {
+      const [ok, sub] = st[n];
+      ap(L, h('button', { class: 'fs-st' + (this.schritt === n ? ' akt' : '') + (ok && this.schritt !== n ? ' ok' : ''), 'data-schritt': n, onclick: () => this.schrittWahl(n) },
+        h('i', {}, ok && this.schritt !== n ? '✓' : String(n)), h('span', {}, h('b', {}, titel), h('small', {}, sub))));
+    }
+    const P = this.panel; P.innerHTML = ''; P.dataset.s = this.schritt; const n = this.schritt; const zone = this.istZone();
+    const titel = { 1: 'Raum und Flächen', 2: `Welche Fliese für ${this.zielName()}?`, 3: `Verlegung · ${this.zielName()}`, 4: 'Wände – jede Wand einzeln', 5: 'Dusche & Abdichtung', 6: 'Mengen & Plan' }[n];
+    ap(P, h('div', { class: 'fs-ptitel' }, titel));
+    const zielChips = (liste) => { const d = h('div', { class: 'fs-zielchips' }); for (const [z, l] of liste) ap(d, h('button', { class: 'chip' + (this.ziel === z ? ' on' : ''), 'data-ziel': z, onclick: () => { this.ziel = z; this.edit = null; this.alles(); } }, l, this.aktiv(z) ? ' ✓' : '')); return d; };
+    const flaechen = zone ? [['zone', 'Fliesenfläche']] : [['boden', 'Boden'], ['wand', 'Alle Wände'], ['sockel', 'Sockel'], ['oben', 'Wand oben (2. Fliese)'], ['fries', 'Fries / Bordüre'], ['rand', 'Randfries Boden']];
+    if (n === 1) {
+      const rooms = this.rooms(); const rl = h('div', { class: 'fs-raeume' });
+      for (const r of rooms) { const fl = r.poly ? G.polyArea(r.poly) / 1e6 : 0; const t = r.tiles || {}; const bel = [t.boden && t.boden.aktiv ? 'Boden' : '', t.wand && t.wand.aktiv ? 'Wand' : ''].filter(Boolean).join(' + ');
+        ap(rl, h('button', { class: 'fs-raumk' + (r.id === this.roomId ? ' an' : ''), 'data-raum': r.id, onclick: () => { this.roomId = r.id; if (this.istZone()) this.ziel = 'zone'; else if (this.ziel === 'zone') this.ziel = 'boden'; this.planNeu = true; this.alles(); } }, h('b', {}, this.raumName(r)), h('small', {}, `${m2(fl)}${bel ? ' · ' + bel + ' gefliest' : ' · noch nicht gefliest'}`))); }
+      ap(P, h('div', { class: 'fs-sub' }, 'Raum antippen:'), rl, this.links);
+    } else if (n === 2) {
+      ap(P, zielChips(flaechen), this.rechts, this.wahl);
+    } else if (n === 3) {
+      ap(P, zielChips(zone ? flaechen : flaechen.filter(([z]) => z === 'boden' || z === 'wand' || this.aktiv(z))), this.rechts);
+    } else if (n === 4) {
+      if (zone) ap(P, h('div', { class: 'note' }, 'Eine Fliesenfläche hat keine Wände – Wände gibt es bei Räumen.'));
+      else ap(P, h('div', { class: 'muted' }, 'Wand antippen – dann eigene Höhe, eigene Fliese oder Verlegung nur für diese Wand. Die Vorschau zeigt die Wandabwicklung.'), this.links, this.rechts);
+    } else if (n === 5) {
+      ap(P, h('div', { class: 'note' }, 'Dieser Schritt ist in Arbeit und kommt als Nächstes: Ablauf (Punktablauf, Rinne, Wandablauf), Gefälle mit Höhenunterschied, Abdichtung nach DIN 18534 (W0-I bis W3-I) mit Dichtband, Ecken und Manschetten, Bewegungsfugen.'));
+    } else if (n === 6) {
+      ap(P, h('div', { class: 'fs-zeile wrap' }, h('button', { class: 'btn', onclick: () => this.materialliste() }, '📋 Materialliste'), h('button', { class: 'btn', onclick: () => this.pdf() }, '📄 Verlegeplan PDF')), this.rechts);
+    }
+    const vor = n < 6 ? h('button', { class: 'btn pri fs-weiter', 'data-tw': 'fs-weiter', onclick: () => this.schrittWahl(n + 1) }, `Weiter: ${SCHRITTE[n][1]} ▶`) : h('button', { class: 'btn pri fs-weiter', onclick: () => this.schliessen() }, '✓ Fertig');
+    ap(P, h('div', { class: 'fs-pfuss' }, n > 1 ? h('button', { class: 'btn', 'data-tw': 'fs-zurueck', onclick: () => this.schrittWahl(n - 1) }, `◀ ${SCHRITTE[n - 2][1]}`) : h('span'), vor));
+  }
   rechtsBauen() {
     const R = this.rechts; R.innerHTML = '';
     const z = this.ziel; const c = this.cfg(z) || (z.startsWith('wand:') ? {} : null); const an = this.aktiv(z); const f = this.fliese(z);
-    ap(R, h('div', { class: 'fs-l' }, '③ ' + this.zielName()));
+    ap(R, h('div', { class: 'fs-l', 'data-teil': 'kopf' }, this.zielName()));
     // An/Aus + aktuelle Fliese
     const schalter = (txt, val, fn) => h('label', { class: 'fs-schalter' }, h('input', { type: 'checkbox', checked: !!val, onchange: (e) => fn(e.target.checked) }), h('span', {}, txt));
-    const kopf = h('div', { class: 'fs-akt' });
+    const kopf = h('div', { class: 'fs-akt', 'data-teil': 'kopf' });
     if (z.startsWith('wand:')) {
       const k = +z.slice(5); const w = this.cfg('wand');
       if (!w || !w.aktiv) ap(kopf, h('div', { class: 'note' }, 'Für die Wände ist noch keine Fliese gewählt. Erst „Alle Wände“ belegen oder hier direkt eine Fliese antippen (dann wird nur diese Wand gefliest).'));
@@ -421,7 +525,7 @@ class Studio {
     ap(R, this.mengen());
     if (['boden', 'wand', 'zone'].includes(z)) ap(R, this.secUebertragen());
   }
-  sec(titel, ...kids) { return h('details', { class: 'fs-sec', open: (this._zu || {})[titel] ? null : true, ontoggle: (e) => { this._zu = this._zu || {}; this._zu[titel] = !e.target.open; } }, h('summary', {}, titel), ...kids); }
+  sec(titel, ...kids) { return h('details', { class: 'fs-sec', 'data-teil': TEIL[titel] || 'flaeche', open: (this._zu || {})[titel] ? null : true, ontoggle: (e) => { this._zu = this._zu || {}; this._zu[titel] = !e.target.open; } }, h('summary', {}, titel), ...kids); }
   chips(vals, cur, fn, opt = {}) { const d = h('div', { class: 'fs-chips' }); for (const [v, l] of vals) ap(d, h('button', { class: 'chip' + (String(cur) === String(v) ? ' on' : ''), title: opt.title ? opt.title(v) : null, onclick: () => fn(v) }, l)); return d; }
   num(val, fn, opt = {}) { const i = h('input', { type: 'number', value: val ?? '', step: opt.step || 1, min: opt.min, style: `width:${opt.w || 80}px` }); i.onchange = () => { const v = parseFloat(String(i.value).replace(',', '.')); if (isFinite(v)) fn(v); }; return i; }
   zeile(label, ...el) { return h('div', { class: 'fs-zl' }, h('span', {}, label), h('div', {}, ...el)); }
@@ -606,7 +710,7 @@ class Studio {
   }
   /** Mengen & Kosten des Raums (live) */
   mengen() {
-    const r = this.room; const box = h('div', {});
+    const r = this.room; const box = h('div', { 'data-teil': 'mengen' });
     const kv = h('div', { class: 'kv' }); const add = (k, v, cls) => ap(kv, h('span', {}, k), h('b', {}, cls ? h('span', { class: 'pill ' + cls }, v) : v));
     let fr = null, wp = null;
     try {
@@ -672,14 +776,14 @@ class Studio {
   /* ───────── LV ───────── */
   async lvDatei(file = null) {
     if (FREI) return;
-    const M = await import('./ai.js?v=20261122-2215');
+    const M = await import('./ai.js?v=20261123-0645');
     const n0 = this.doc.p.tileLib.length;
     await M.readLV(this.app, file);
     if (this.doc.p.tileLib.length > n0) { this.tab = 'lv'; this.alles(); this.angebotAuto(); }
   }
   async lvDrive() {
     if (FREI) return;
-    const D = await import('./drive.js?v=20261122-2215'); const b = this.doc.p.meta.baustelle; const app = this.app;
+    const D = await import('./drive.js?v=20261123-0645'); const b = this.doc.p.meta.baustelle; const app = this.app;
     if (!D.token()) { try { await D.anmelden(); } catch (e) { return app.toast('Google Drive: ' + e.message, true); } }
     app.toast('Suche LV-Dateien im Baustellen-Ordner …');
     let liste = [];
@@ -748,7 +852,7 @@ class Studio {
     app.modal('Materialliste Fliesen – alle Räume', h('div', {}, t, summe ? h('div', { style: 'text-align:right;margin-top:8px;font-weight:700' }, 'Fliesen-Material gesamt (netto): ' + eur(summe)) : null, h('div', { class: 'muted', style: 'margin-top:8px' }, 'Bestellmengen inkl. Reserve und Reststückverwertung; Laibungen sind bei den Wänden enthalten. Kleber nach Format und Verlegeart.')), [h('button', { class: 'btn', onclick: csv }, 'Als CSV (Excel)'), h('button', { class: 'btn pri', onclick: () => this.pdf(true) }, 'Als PDF (dieser Raum)')]);
   }
   async pdf(nurMaterial = false) {
-    const M = await import('./print.js?v=20261122-2215');
+    const M = await import('./print.js?v=20261123-0645');
     const holder = h('div', { style: 'position:fixed;left:-9999px;top:0;width:800px;height:600px' }); ap(document.body, holder);
     const v = mountPlanEmbedded(this.app, holder, { roomId: this.roomId, flaeche: 'beides', mode: 'plan' });
     try { await M.printTilePlan(this.app, v, { nurMaterial }); } finally { if (v._ro) v._ro.disconnect(); holder.remove(); }
@@ -758,6 +862,18 @@ class Studio {
 function mountPlanEmbedded(app, el, opt) { return mountPlan(app, el, Object.assign({ embedded: true }, opt)); }
 
 /* ───────── kleine Bilder ───────── */
+/** Bild für die Bibliothek: mehrere Fliesen im Verband mit Fuge */
+function bibBild(t, w = 150, hh = 96) {
+  const c = h('canvas', { class: 'fs-bibbild', width: w * 2, height: hh * 2 });
+  try {
+    const x = c.getContext('2d'); x.fillStyle = t.fugeFarbe || '#c9c5bd'; x.fillRect(0, 0, c.width, c.height);
+    const s = tileSurface(Object.assign({}, t), 256); const ratio = (t.B || 300) / (t.L || 600);
+    const quer = ratio > 0.98 ? 2.3 : 1.6; let tl = c.width / quer, tb = tl * ratio; if (tb > c.height * 0.9) { tb = c.height * 0.6; tl = tb / ratio; }
+    const g = 3; let row = 0;
+    for (let y = -tb * 0.25; y < c.height; y += tb + g, row++) { const off = ratio < 0.98 && row % 2 ? tl / 2 : 0; for (let xx = -off - g; xx < c.width; xx += tl + g) x.drawImage(s, xx, y, tl, tb); }
+  } catch (e) { }
+  return c;
+}
 function swatch(t, px = 40) {
   const ratio = t.L && t.B ? Math.min(1.6, Math.max(0.45, t.B / t.L)) : 1;
   const w = px, hh = Math.max(14, Math.round(px * Math.min(1, ratio + 0.15)));

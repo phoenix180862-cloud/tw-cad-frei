@@ -847,3 +847,62 @@ details.bk[open] .bk-kurz { display: none; }
 .sl-rest { flex: 1; }
 .sl-pin { min-height: 50px; font-weight: 600; color: var(--tx2); }
 .sl-pin b { font-size: 15px; }
+
+/* ═════ Fliesen-Studio Entwurf F1 „Schritt für Schritt“ (Thomas 22.11.2026) ═════ */
+.fs-schritte { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--bg2); }
+.fs-st { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--line2); background: var(--bg3); color: var(--tx2); text-align: left; cursor: pointer; font: inherit; }
+.fs-st i { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--line2); color: #fff; font: 700 13px var(--font); font-style: normal; }
+.fs-st span { min-width: 0; display: flex; flex-direction: column; }
+.fs-st b { font-size: 13px; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs-st small { font-size: 11px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs-st.ok i { background: #27AE60; }
+.fs-st.akt { border: 2px solid var(--red, #C41E1E); background: color-mix(in srgb, var(--red, #C41E1E) 14%, var(--bg3)); }
+.fs-st.akt i { background: var(--red, #C41E1E); }
+.fs-body.f1 { grid-template-columns: minmax(0, 1fr) 520px; }
+.fs-body.f1 .fs-mitte { padding: 8px 10px 10px; gap: 8px; }
+.fs-body.f1 .fs-vorschau { flex: 1 1 auto; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.fs-panel { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 12px 14px 0; border-left: 1px solid var(--line); background: var(--bg2); min-height: 0; }
+.fs-ptitel { font: 800 18px/1.25 var(--font); color: var(--tx); }
+.fs-zielchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fs-zielchips .chip { min-height: 36px; font-size: 12.5px; }
+.fs-panel .fs-links, .fs-panel .fs-rechts { border: 0; overflow: visible; padding: 0; min-height: 0; }
+.fs-panel .fs-wahl { flex: none; }
+.fs-panel .fs-liste { overflow: visible; max-height: none; }
+.fs-pfuss { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: 10px; margin-top: auto; padding: 10px 0 12px; background: var(--bg2); border-top: 1px solid var(--line); z-index: 2; }
+.fs-pfuss .btn { min-height: 44px; }
+.fs-weiter { font-size: 14px; }
+.fs-raeume { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.fs-raumk { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 52px; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line2); background: var(--bg3); color: var(--tx); text-align: left; cursor: pointer; font: inherit; }
+.fs-raumk small { color: var(--tx3); font-size: 11px; }
+.fs-raumk.an { border: 2px solid var(--acc); background: color-mix(in srgb, var(--acc) 16%, var(--bg3)); }
+/* was in welchem Schritt sichtbar ist */
+.fs-panel[data-s="2"] .fs-rechts > *:not([data-teil="kopf"]) { display: none; }
+.fs-panel[data-s="2"] .fs-rechts > .fs-l { display: none; }
+.fs-panel[data-s="3"] .fs-rechts > [data-teil="waende"], .fs-panel[data-s="3"] .fs-rechts > [data-teil="mengen"] { display: none; }
+.fs-panel[data-s="3"] .fs-rechts > .fs-l { display: none; }
+.fs-panel[data-s="4"] .fs-rechts > [data-teil="mengen"], .fs-panel[data-s="4"] .nur1 { display: none; }
+.fs-panel[data-s="6"] .fs-rechts > *:not([data-teil="mengen"]) { display: none; }
+.fs-hinweis:empty { display: none; }
+@media (max-width: 1250px) { .fs-body.f1 { grid-template-columns: minmax(0, 1fr) 430px; } .fs-st small { display: none; } }
+@media (max-width: 900px) {
+  .fs-body.f1 { grid-template-columns: 1fr; grid-template-rows: 42vh auto; overflow-y: auto; }
+  .fs-panel { border-left: 0; overflow: visible; }
+  .fs-st { flex-direction: column; justify-content: center; gap: 2px; padding: 4px 2px; text-align: center; min-height: 48px; }
+  .fs-st b { font-size: 10.5px; white-space: normal; }
+  .fs-raeume { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) { .fs-st b { display: none; } .fs-schritte { gap: 4px; padding: 6px; } }
+.fs-panel > * { flex-shrink: 0; }
+.fs-panel .fs-tabs .fs-l { display: none; }
+.fs-panel .fs-tabs { padding: 4px 0 0; }
+.fs-weiter { background: var(--red, #C41E1E) !important; border-color: var(--red, #C41E1E) !important; color: #fff !important; }
+/* Fliesen-Bibliothek mit Bildern */
+.fs-bibchips .chip { min-height: 34px; }
+.fs-bib { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.fs-bibk { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 6px; border-radius: 10px; border: 1px solid var(--line2); background: var(--bg3); color: var(--tx); text-align: left; cursor: pointer; font: inherit; }
+.fs-bibk:hover { border-color: var(--acc); }
+.fs-bibk.an { border: 2px solid var(--red, #C41E1E); box-shadow: 0 0 0 3px rgba(196,30,30,.22); }
+.fs-bibbild { width: 100%; height: 96px; border-radius: 6px; display: block; }
+.fs-bibk b { font-size: 12.5px; line-height: 1.2; }
+.fs-bibk small { font-size: 11px; color: var(--tx3); }
+@media (max-width: 900px) { .fs-body.f1 .fs-mitte { min-height: 0; } .fs-body.f1 .fs-vorschau { min-height: 0; } .fs-panel { padding-bottom: 0; } }
