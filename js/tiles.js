@@ -1,6 +1,6 @@
 // TW-CAD – Fliesen-Engine: Verbände, Zuschnitt, Randstück-Prüfung, Optimierung, Mengen
-import * as G from './geom.js?v=20261123-0745';
-import { kleberEmpfehlung } from './fliesenkatalog.js?v=20261123-0745';
+import * as G from './geom.js?v=20261123-0837';
+import { kleberEmpfehlung } from './fliesenkatalog.js?v=20261123-0837';
 
 export const VERBAENDE = {
   kreuz: 'Kreuzfuge',

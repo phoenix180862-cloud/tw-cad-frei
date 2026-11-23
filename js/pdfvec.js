@@ -1,6 +1,6 @@
 // TW-CAD – Vektor-PDF auswerten: Linien lesen, Maßstab bestimmen, Wände/Öffnungen aus Maßen rekonstruieren
 // Reine Rechenfunktionen (auch in Node testbar).
-import * as G from './geom.js?v=20261123-0745';
+import * as G from './geom.js?v=20261123-0837';
 
 /* ───────── 1. Linien aus der pdf.js-Operatorliste ───────── */
 export function extractPaths(opList, OPS, vt /* viewport.transform */) {
